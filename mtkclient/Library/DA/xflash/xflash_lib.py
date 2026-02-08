@@ -950,7 +950,9 @@ class DAXFlash(metaclass=LogBase):
             # stage 1
             da1offset = self.daconfig.da_loader.region[1].m_buf
             da1size = self.daconfig.da_loader.region[1].m_len
-            da1address = self.daconfig.da_loader.region[1].m_start_addr
+            # Use da_payload_addr from chipconfig instead of DA loader's m_start_addr
+            # This ensures we use the correct verified address (0x201000 for MT6768)
+            da1address = self.config.chipconfig.da_payload_addr
             da1sig_len = self.daconfig.da_loader.region[1].m_sig_len
             bootldr.seek(da1offset)
             da1 = bootldr.read(da1size)
