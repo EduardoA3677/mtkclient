@@ -687,16 +687,13 @@ class Preloader(metaclass=LogBase):
             data = b""
             try:
                 resaddr = self.rdword()
-                self.debug(f"Jump_DA: Received address response: {hex(resaddr)}")
             except Exception as e:
                 self.error(f"Jump_DA Resp2 {str(e)} ," + hexlify(data).decode('utf-8'))
                 self.config.set_gui_status(self.config.tr("DA Error"))
                 return False
             if resaddr == addr:
-                self.debug(f"Jump_DA: Address confirmed, reading status...")
                 try:
                     status = self.rword()
-                    self.debug(f"Jump_DA: Received status: {hex(status)}")
                     # Do NOT read status after sleep !
                     time.sleep(0.1)
                 except Exception as e:
@@ -707,13 +704,8 @@ class Preloader(metaclass=LogBase):
                     self.info(f"Jumping to {hex(addr)}: ok.")
                     self.config.set_gui_status(self.config.tr(f"Jumping to {hex(addr)}: ok."))
                     return True
-                else:
-                    self.error(f"Jump_DA status error: {self.eh.status(status)} (status={hex(status)})")
-            else:
-                self.error(f"Jump_DA address mismatch: expected {hex(addr)}, got {hex(resaddr)}")
+            self.error(f"Jump_DA status error:{self.eh.status(status)}")
             self.config.set_gui_status(self.config.tr("DA Error"))
-        else:
-            self.error(f"Jump_DA: echo command failed")
         return False
 
     def jump_da64(self, addr: int):
