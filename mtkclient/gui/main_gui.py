@@ -578,6 +578,11 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_4 = QVBoxLayout()
         self.verticalLayout_4.setObjectName(u"verticalLayout_4")
+        self.eraseflashbtn = QPushButton(self.tab)
+        self.eraseflashbtn.setObjectName(u"eraseflashbtn")
+
+        self.verticalLayout_4.addWidget(self.eraseflashbtn)
+
         self.erasepreloaderbtn = QPushButton(self.tab)
         self.erasepreloaderbtn.setObjectName(u"erasepreloaderbtn")
 
@@ -811,6 +816,7 @@ class Ui_MainWindow(object):
         self.writepreloaderbtn.setText(QCoreApplication.translate("MainWindow", u"Write preloader", None))
         self.writeboot2btn.setText(QCoreApplication.translate("MainWindow", u"Write boot2", None))
         self.writerpmbbtn.setText(QCoreApplication.translate("MainWindow", u"Write RPMB", None))
+        self.eraseflashbtn.setText(QCoreApplication.translate("MainWindow", u"Erase flash", None))
         self.erasepreloaderbtn.setText(QCoreApplication.translate("MainWindow", u"Erase preloader", None))
         self.eraseboot2btn.setText(QCoreApplication.translate("MainWindow", u"Erase boot2", None))
         self.eraserpmbbtn.setText(QCoreApplication.translate("MainWindow", u"Erase RPMB", None))
