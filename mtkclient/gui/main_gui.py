@@ -578,6 +578,11 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_4 = QVBoxLayout()
         self.verticalLayout_4.setObjectName(u"verticalLayout_4")
+        self.eraseflashbtn = QPushButton(self.tab)
+        self.eraseflashbtn.setObjectName(u"eraseflashbtn")
+
+        self.verticalLayout_4.addWidget(self.eraseflashbtn)
+
         self.erasepreloaderbtn = QPushButton(self.tab)
         self.erasepreloaderbtn.setObjectName(u"erasepreloaderbtn")
 
@@ -745,7 +750,7 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"MTKClient v2.01", None))
-        self.actionRead_partition_s.setText(QCoreApplication.translate("MainWindow", u"Quit", None))
+        self.actionRead_partition_s.setText(QCoreApplication.translate("MainWindow", u"Read partition(s)", None))
         self.actionRead_full_flash.setText(QCoreApplication.translate("MainWindow", u"Read full flash", None))
         self.actionRead_offset.setText(QCoreApplication.translate("MainWindow", u"Read at offset", None))
         self.actionWrite_partition_s.setText(QCoreApplication.translate("MainWindow", u"Write partition(s)", None))
@@ -811,6 +816,7 @@ class Ui_MainWindow(object):
         self.writepreloaderbtn.setText(QCoreApplication.translate("MainWindow", u"Write preloader", None))
         self.writeboot2btn.setText(QCoreApplication.translate("MainWindow", u"Write boot2", None))
         self.writerpmbbtn.setText(QCoreApplication.translate("MainWindow", u"Write RPMB", None))
+        self.eraseflashbtn.setText(QCoreApplication.translate("MainWindow", u"Erase flash", None))
         self.erasepreloaderbtn.setText(QCoreApplication.translate("MainWindow", u"Erase preloader", None))
         self.eraseboot2btn.setText(QCoreApplication.translate("MainWindow", u"Erase boot2", None))
         self.eraserpmbbtn.setText(QCoreApplication.translate("MainWindow", u"Erase RPMB", None))

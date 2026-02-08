@@ -58,18 +58,18 @@ class EraseFlashWindow(QObject):
             if self.mtkClass.daloader.daconfig.storage.flashtype == "ufs":
                 self.flashsize = self.mtkClass.daloader.daconfig.storage.ufs.lu1_size
             else:
-                self.flashsize = self.mtkClass.daloader.daconfig.storage.emmc.boot1size
+                self.flashsize = self.mtkClass.daloader.daconfig.storage.emmc.boot1_size
         elif parttype == "boot2":
             if self.mtkClass.daloader.daconfig.storage.flashtype == "ufs":
                 self.flashsize = self.mtkClass.daloader.daconfig.storage.ufs.lu2_size
             else:
-                self.flashsize = self.mtkClass.daloader.daconfig.storage.emmc.boot2size
+                self.flashsize = self.mtkClass.daloader.daconfig.storage.emmc.boot2_size
         self.parttype = parttype
         self.parent.Status["totalsize"] = self.flashsize
         self.parent.Status["currentPartitionSize"] = self.flashsize
         self.parent.Status["currentPartition"] = parttype
         self.parent.disablebuttons()
-        thread = asyncThread(parent=self, n=0, function=self.eraseFlashAsync, parameters=[parttype])
+        thread = asyncThread(parent=self.parent, n=0, function=self.eraseFlashAsync, parameters=[parttype])
         thread.sendToLogSignal.connect(self.sendToLog)
         thread.sendUpdateSignal.connect(self.parent.updateState)
         thread.start()
@@ -86,12 +86,11 @@ class EraseFlashWindow(QObject):
         self.disableButtonsSignal.emit()
         variables = mock.Mock()
         variables.parttype = None
-        self.parent.Status["writeFile"] = variables.filename
         self.parent.Status["currentPartitionSize"] = self.flashsize
-        self.parent.Status["currentPartition"] = variables.parttype
+        self.parent.Status["currentPartition"] = self.parttype
         self.da_handler.close = self.erasePartDone  # Ignore the normally used sys.exit
         if "rpmb" in parameters:
-            self.mtkClass.daloader.read_rpmb(variables.filename)
+            self.mtkClass.daloader.erase_rpmb()
         else:
             if "boot1" in parameters:
                 variables.parttype = "boot1"

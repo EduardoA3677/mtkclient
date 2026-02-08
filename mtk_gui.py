@@ -311,6 +311,9 @@ class MainWindow(QMainWindow):
         # Add Advanced Settings menu action
         self.add_settings_menu()
         
+        # Connect Quit action
+        self.ui.action_Quit.triggered.connect(self.close)
+        
         self.thread = thread
         self.devhandler = devhandler
         self.readflash = None
@@ -341,7 +344,8 @@ class MainWindow(QMainWindow):
             if os.path.exists(fname):
                 self.preloader = fname
                 self.devhandler.da_handler.mtk.config.preloader_filename = fname
-                self.devhandler.da_handler.mtk.config.preloader = open(fname,'rb').read()
+                with open(fname, 'rb') as rf:
+                    self.devhandler.da_handler.mtk.config.preloader = rf.read()
 
     def openAdvancedSettings(self):
         """Open the Advanced Settings dialog"""
@@ -436,6 +440,7 @@ class MainWindow(QMainWindow):
         self.ui.writerpmbbtn.setEnabled(True)
 
         self.ui.erasepartitionsbtn.setEnabled(True)
+        self.ui.eraseflashbtn.setEnabled(True)
         self.ui.eraseboot2btn.setEnabled(True)
         self.ui.erasepreloaderbtn.setEnabled(True)
         self.ui.eraserpmbbtn.setEnabled(True)
@@ -484,6 +489,7 @@ class MainWindow(QMainWindow):
         self.eraseflash.disableButtonsSignal.connect(self.disablebuttons)
         self.ui.eraseselectallpartitionscheckbox.clicked.connect(self.eraseflash.selectAll)
         self.ui.erasepartitionsbtn.clicked.connect(self.eraseflash.erasePartition)
+        self.ui.eraseflashbtn.clicked.connect(lambda: self.eraseflash.eraseFlash("user"))
         self.ui.eraserpmbbtn.clicked.connect(lambda: self.eraseflash.eraseFlash("rpmb"))
         self.ui.erasepreloaderbtn.clicked.connect(lambda: self.eraseflash.eraseFlash("boot1"))
         self.ui.eraseboot2btn.clicked.connect(lambda: self.eraseflash.eraseFlash("boot2"))
@@ -498,6 +504,58 @@ class MainWindow(QMainWindow):
         self.ui.writeboot2btn.clicked.connect(lambda: self.writeflash.writeFlash("boot2"))
         self.ui.writepreloaderbtn.clicked.connect(lambda: self.writeflash.writeFlash("boot1"))
         self.ui.writerpmbbtn.clicked.connect(lambda: self.writeflash.writeFlash("rpmb"))
+
+    def initmenus(self):
+        """Wire existing QActions to the File menu for keyboard/menu access"""
+        from PySide6.QtWidgets import QMenu
+
+        # Read submenu
+        read_menu = QMenu(self.tr("&Read"), self)
+        self.ui.actionRead_partition_s.triggered.connect(self.readflash.dumpPartition)
+        self.ui.actionRead_full_flash.triggered.connect(lambda: self.readflash.dumpFlash("user"))
+        self.ui.actionRead_preloader.triggered.connect(lambda: self.readflash.dumpFlash("boot1"))
+        self.ui.actionRead_boot2.triggered.connect(lambda: self.readflash.dumpFlash("boot2"))
+        self.ui.actionRead_RPMB.triggered.connect(lambda: self.readflash.dumpFlash("rpmb"))
+        read_menu.addAction(self.ui.actionRead_partition_s)
+        read_menu.addAction(self.ui.actionRead_full_flash)
+        read_menu.addAction(self.ui.actionRead_preloader)
+        read_menu.addAction(self.ui.actionRead_boot2)
+        read_menu.addAction(self.ui.actionRead_RPMB)
+
+        # Write submenu
+        write_menu = QMenu(self.tr("&Write"), self)
+        self.ui.actionWrite_partition_s.triggered.connect(self.writeflash.writePartition)
+        self.ui.actionWrite_full_flash.triggered.connect(lambda: self.writeflash.writeFlash("user"))
+        self.ui.actionWrite_preloader.triggered.connect(lambda: self.writeflash.writeFlash("boot1"))
+        self.ui.actionWrite_boot2.triggered.connect(lambda: self.writeflash.writeFlash("boot2"))
+        self.ui.actionWrite_RPMB.triggered.connect(lambda: self.writeflash.writeFlash("rpmb"))
+        write_menu.addAction(self.ui.actionWrite_partition_s)
+        write_menu.addAction(self.ui.actionWrite_full_flash)
+        write_menu.addAction(self.ui.actionWrite_preloader)
+        write_menu.addAction(self.ui.actionWrite_boot2)
+        write_menu.addAction(self.ui.actionWrite_RPMB)
+
+        # Erase submenu
+        erase_menu = QMenu(self.tr("&Erase"), self)
+        self.ui.actionErase_partitions_s.triggered.connect(self.eraseflash.erasePartition)
+        erase_menu.addAction(self.ui.actionErase_partitions_s)
+
+        # Tools submenu
+        tools_menu = QMenu(self.tr("&Tools"), self)
+        self.ui.actionGenerate_RPMB_keys.triggered.connect(self.genkeys.generateKeys)
+        self.ui.actionUnlock_device.triggered.connect(lambda: self.unlock.unlock("unlock"))
+        self.ui.actionLock_device.triggered.connect(lambda: self.unlock.unlock("lock"))
+        tools_menu.addAction(self.ui.actionGenerate_RPMB_keys)
+        tools_menu.addAction(self.ui.actionUnlock_device)
+        tools_menu.addAction(self.ui.actionLock_device)
+
+        # Insert menus before the Quit action
+        quit_action = self.ui.action_Quit
+        self.ui.menuFile.insertMenu(quit_action, read_menu)
+        self.ui.menuFile.insertMenu(quit_action, write_menu)
+        self.ui.menuFile.insertMenu(quit_action, erase_menu)
+        self.ui.menuFile.insertMenu(quit_action, tools_menu)
+        self.ui.menuFile.insertSeparator(quit_action)
 
     @Slot(str)
     def update_status_text(self, text):
@@ -517,6 +575,8 @@ class MainWindow(QMainWindow):
         self.ui.writeboot2btn.setEnabled(False)
         self.ui.writerpmbbtn.setEnabled(False)
 
+        self.ui.erasepartitionsbtn.setEnabled(False)
+        self.ui.eraseflashbtn.setEnabled(False)
         self.ui.eraseboot2btn.setEnabled(False)
         self.ui.erasepreloaderbtn.setEnabled(False)
         self.ui.eraserpmbbtn.setEnabled(False)
@@ -539,6 +599,8 @@ class MainWindow(QMainWindow):
         self.ui.writeboot2btn.setEnabled(True)
         self.ui.writerpmbbtn.setEnabled(True)
 
+        self.ui.erasepartitionsbtn.setEnabled(True)
+        self.ui.eraseflashbtn.setEnabled(True)
         self.ui.eraseboot2btn.setEnabled(True)
         self.ui.erasepreloaderbtn.setEnabled(True)
         self.ui.eraserpmbbtn.setEnabled(True)
@@ -667,6 +729,12 @@ class MainWindow(QMainWindow):
             self.initunlock()
             self.initerase()
             self.initwrite()
+            # Ensure menus are initialized only once to avoid duplicate submenus and signal connections
+            if not hasattr(self, "_menus_initialized"):
+                self._menus_initialized = False
+            if not self._menus_initialized:
+                self.initmenus()
+                self._menus_initialized = True
             self.getpartitions()
             self.ui.tabWidget.setCurrentIndex(0)
             self.ui.tabWidget.update()

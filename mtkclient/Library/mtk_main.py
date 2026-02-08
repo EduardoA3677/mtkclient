@@ -90,8 +90,8 @@ class ArgHandler(metaclass=LogBase):
             pass
         try:
             if args.watchdog_address is not None:
-                config.chipconfig.watchdog = getint(args.wdt)
-                self.info("O:Watchdog addr:\t\t" + args.wdt)
+                config.chipconfig.watchdog = getint(args.watchdog_address)
+                self.info("O:Watchdog addr:\t\t" + args.watchdog_address)
         except AttributeError:
             pass
         try:
