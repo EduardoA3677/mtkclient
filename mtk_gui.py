@@ -25,6 +25,7 @@ from mtkclient.gui.writeFlashPartitions import WriteFlashWindow
 from mtkclient.gui.eraseFlashPartitions import EraseFlashWindow
 from mtkclient.gui.toolsMenu import generateKeysMenu, UnlockMenu
 from mtkclient.gui.toolkit import asyncThread, trap_exc_during_debug, convert_size, CheckBox, FDialog, TimeEstim
+from mtkclient.gui.settings_dialog import SettingsDialog
 from mtkclient.config.payloads import PathConfig
 from mtkclient.gui.main_gui import Ui_MainWindow
 import os
@@ -306,6 +307,10 @@ class MainWindow(QMainWindow):
         self.ui.consettings2btn.clicked.connect(self.selectPreloader)
         self.ui.iotcheck.clicked.connect(self.selectIoT)
         self.ui.serialportbtn.clicked.connect(self.openserialportdialog)
+        
+        # Add Advanced Settings menu action
+        self.add_settings_menu()
+        
         self.thread = thread
         self.devhandler = devhandler
         self.readflash = None
@@ -337,6 +342,30 @@ class MainWindow(QMainWindow):
                 self.preloader = fname
                 self.devhandler.da_handler.mtk.config.preloader_filename = fname
                 self.devhandler.da_handler.mtk.config.preloader = open(fname,'rb').read()
+
+    def openAdvancedSettings(self):
+        """Open the Advanced Settings dialog"""
+        dialog = SettingsDialog(self.devhandler.da_handler.mtk.config, self)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            self.sendToLog("Settings updated successfully")
+    
+    def add_settings_menu(self):
+        """Add Advanced Settings to File menu"""
+        from PySide6.QtGui import QAction
+        
+        # Create settings action
+        self.actionAdvancedSettings = QAction(self)
+        self.actionAdvancedSettings.setText("&Advanced Settings...")
+        self.actionAdvancedSettings.setShortcut("Ctrl+,")
+        self.actionAdvancedSettings.triggered.connect(self.openAdvancedSettings)
+        
+        # Insert before Quit action
+        actions = self.ui.menuFile.actions()
+        if actions:
+            self.ui.menuFile.insertAction(actions[0], self.actionAdvancedSettings)
+            self.ui.menuFile.insertSeparator(actions[0])
+        else:
+            self.ui.menuFile.addAction(self.actionAdvancedSettings)
 
     def showDebugInfo(self):
         self.ui.connectInfo.setHidden(True)
