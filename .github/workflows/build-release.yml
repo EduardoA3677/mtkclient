@@ -9,7 +9,7 @@ on:
 
 jobs:
   build-windows:
-    name: Build Windows Executable
+    name: Build Windows x64 Executable
     runs-on: windows-latest
     steps:
       - name: Checkout code
@@ -19,6 +19,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          architecture: 'x64'
           cache: 'pip'
 
       - name: Install dependencies
@@ -27,24 +28,24 @@ jobs:
           pip install pyinstaller
           pip install -r requirements.txt
 
-      - name: Build Console Version with PyInstaller
+      - name: Build Console Version with PyInstaller (x64)
         run: |
           pyinstaller mtk_console.spec
 
-      - name: Build GUI Version with PyInstaller
+      - name: Build GUI Version with PyInstaller (x64)
         run: |
           pyinstaller mtk_standalone.spec
 
       - name: Upload Console Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: mtk-console-windows
+          name: mtk-console-windows-x64
           path: dist/mtk_console_*
 
       - name: Upload GUI Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: mtk-gui-windows
+          name: mtk-gui-windows-x64
           path: dist/mtk_standalone_*
 
   build-linux:

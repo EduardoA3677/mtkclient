@@ -1,10 +1,20 @@
 @echo off
-REM MTKClient Installer for Windows
+REM MTKClient Installer for Windows x64
 REM This script installs mtkclient and creates shortcuts
 
-echo MTKClient Installer for Windows
+echo MTKClient Installer for Windows x64
 echo ==================================
 echo.
+
+REM Check for 64-bit Windows
+if not "%PROCESSOR_ARCHITECTURE%"=="AMD64" (
+    if not "%PROCESSOR_ARCHITEW6432%"=="AMD64" (
+        echo ERROR: This installer is for Windows x64 only
+        echo Your system appears to be 32-bit
+        pause
+        exit /b 1
+    )
+)
 
 REM Check for administrator privileges
 net session >nul 2>&1
