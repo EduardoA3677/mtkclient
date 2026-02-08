@@ -967,10 +967,7 @@ class DAXFlash(metaclass=LogBase):
             if self.mtk.preloader.send_da(da1address, da1size, da1sig_len, da1):
                 self.info("Successfully uploaded stage 1, jumping ..")
                 if self.mtk.preloader.jump_da(da1address):
-                    # Wait for READY response (newer DA agents send "READY" instead of 0xC0)
-                    # DA needs time to initialize after jump - timeout set to 3 seconds
-                    self.info("Waiting for DA to initialize and respond...")
-                    ready_response = self.usbread(5, maxtimeout=30)
+                    ready_response = self.usbread(5)
                     if ready_response == b"READY":
                         self.info("Received READY from DA")
                     elif ready_response[0:1] == b"\xC0":
