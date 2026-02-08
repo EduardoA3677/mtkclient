@@ -153,7 +153,7 @@ class MtkConfig(metaclass=LogBase):
                 if self.chipconfig.socid_addr is not None:
                     self.socid = self.peek(self.chipconfig.socid_addr, 0x20)
                 else:
-                    self.socid = self.peek(0x1008ec, 0x20)
+                    self.socid = self.peek(0x100934, 0x20)
                 if self.socid is not None:
                     self.set_socid(self.socid)
         return self.socid
