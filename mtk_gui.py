@@ -729,7 +729,12 @@ class MainWindow(QMainWindow):
             self.initunlock()
             self.initerase()
             self.initwrite()
-            self.initmenus()
+            # Ensure menus are initialized only once to avoid duplicate submenus and signal connections
+            if not hasattr(self, "_menus_initialized"):
+                self._menus_initialized = False
+            if not self._menus_initialized:
+                self.initmenus()
+                self._menus_initialized = True
             self.getpartitions()
             self.ui.tabWidget.setCurrentIndex(0)
             self.ui.tabWidget.update()
