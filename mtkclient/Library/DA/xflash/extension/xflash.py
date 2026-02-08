@@ -418,10 +418,10 @@ class XFlashExt(metaclass=LogBase):
             status = self.status()
             if status == 0:
                 data = self.xread()
-        status = self.status()
-        if status == 0:
-            return status, data
-        return status, b""
+                status = self.status()
+                if status == 0:
+                    return status, data
+        return -1, b""
 
     def custom_writeregister(self, addr, data):
         if self.cmd(XCmd.CUSTOM_WRITEREGISTER):

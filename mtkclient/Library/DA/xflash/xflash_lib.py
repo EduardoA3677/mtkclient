@@ -133,6 +133,9 @@ class DAXFlash(metaclass=LogBase):
 
     def status(self):
         hdr = self.usbread(4 + 4 + 4)
+        if len(hdr) < 12:
+            self.error(f"Status error: Expected 12 bytes header, got {len(hdr)} bytes")
+            return -1
         magic, _, length = unpack("<III", hdr)
         if magic != 0xFEEEEEEF:
             self.error("Status error: Wrong magic")
