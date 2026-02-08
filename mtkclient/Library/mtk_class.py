@@ -173,6 +173,9 @@ class Mtk(metaclass=LogBase):
                         plt.crash(crashmode)
                     except Exception:
                         pass
+                    # Give device time to crash and disconnect
+                    import time
+                    time.sleep(0.5)
                     rmtk = Mtk(config=self.config, loglevel=self.__logger.level,
                                serialportname=rmtk.port.serialportname)
                     rmtk.preloader.display = display
@@ -185,6 +188,9 @@ class Mtk(metaclass=LogBase):
                 except Exception as err:
                     self.__logger.debug(str(err))
                     pass
+                # Give device time to crash and disconnect
+                import time
+                time.sleep(0.5)
                 rmtk = Mtk(config=self.config, loglevel=self.__logger.level, serialportname=rmtk.port.serialportname)
                 rmtk.preloader.display = display
                 if rmtk.preloader.init(maxtries=20):
