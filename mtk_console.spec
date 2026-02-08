@@ -4,6 +4,7 @@
 # Target: Windows x64
 
 from datetime import date
+import os
 
 today = date.today()
 block_cipher = None
@@ -45,6 +46,7 @@ exe = EXE(pyz,
           target_arch='x86_64',
           codesign_identity=None,
           entitlements_file=None,
-          icon='mtkclient/icon.ico' if __import__('os').path.exists('mtkclient/icon.ico') else None)
+          icon='mtkclient/icon.ico' if os.path.exists('mtkclient/icon.ico') else None)
+
 
 

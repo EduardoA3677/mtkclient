@@ -362,11 +362,16 @@ class SettingsDialog(QDialog):
             settings['vid'] = self.vid_input.text()
         if self.pid_input.text():
             settings['pid'] = self.pid_input.text()
-        # Serial port: auto-detect takes precedence over manual entry
+        
+        # Serial port configuration:
+        # - If auto-detect checkbox is checked, use 'DETECT' value (takes precedence)
+        # - Otherwise, use the manually entered port value if provided
+        # This ensures auto-detect overrides manual entry when enabled
         if self.serialport_auto_check.isChecked():
             settings['serialport'] = 'DETECT'
         elif self.serialport_input.text():
             settings['serialport'] = self.serialport_input.text()
+        
         settings['noreconnect'] = self.noreconnect_check.isChecked()
         settings['stock'] = self.stock_da_check.isChecked()
         settings['generatekeys'] = self.generatekeys_check.isChecked()
