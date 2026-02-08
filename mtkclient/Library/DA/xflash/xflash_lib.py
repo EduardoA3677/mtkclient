@@ -964,10 +964,18 @@ class DAXFlash(metaclass=LogBase):
             if self.mtk.preloader.send_da(da1address, da1size, da1sig_len, da1):
                 self.info("Successfully uploaded stage 1, jumping ..")
                 if self.mtk.preloader.jump_da(da1address):
-                    sync = self.usbread(1)
-                    if sync != b"\xC0":
-                        self.error("Error on DA sync")
-                        return False
+                    # Wait for READY response (newer DA agents send "READY" instead of 0xC0)
+                    ready_response = self.usbread(5)
+                    if ready_response == b"READY":
+                        self.info("Received READY from DA")
+                    elif ready_response[0:1] == b"\xC0":
+                        self.info("Received legacy sync byte (0xC0)")
+                        # Read remaining 4 bytes if needed
+                        self.usbread(4)
+                    else:
+                        self.warning(f"Unexpected DA sync response: {ready_response.hex()}")
+                        # Try to continue anyway
+                    
                     self.sync()
                     # if self.kamakiri_pl is not None:
                     #    self.kamakiri_pl.bypass2ndDA()

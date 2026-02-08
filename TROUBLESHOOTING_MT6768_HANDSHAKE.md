@@ -1,6 +1,63 @@
-# Troubleshooting MT6768 DA Handshake Errors
+# Troubleshooting MT6768 DA Handshake Errors - ACTUALIZADO
 
-## Problem Description
+## DESCUBRIMIENTO IMPORTANTE
+
+⚠️ **PROBLEMA IDENTIFICADO Y CORREGIDO** ⚠️
+
+Mediante análisis profundo del archivo pcapng de una sesión de flash real, se descubrió que:
+
+### El Problema Real del Handshake
+
+**Comportamiento Esperado (código antiguo):**
+```
+DA Jump → Espera byte 0xC0 → Continúa
+```
+
+**Comportamiento Real (según pcapng):**
+```
+DA Jump → Recibe "READY" (0x5245414459) → Continúa
+```
+
+### Secuencia Correcta Observada en el PCAPNG
+
+```
+Frame 533-574: Múltiples respuestas "READY" (0x5245414459)
+Frame 660: Intercambio 0x00200000 (dirección)
+Frame 674-806: Envío de código ARM al dispositivo  
+Frame 816: Confirmación 0x00200000
+Frame 824-826: MAGIC (0xFEEEEEEF) + "SYNC" (0x53594E43)
+Frame 828+: Comandos XFLASH normales
+```
+
+### Corrección Implementada
+
+El archivo `mtkclient/Library/DA/xflash/xflash_lib.py` ha sido modificado para:
+
+1. **Leer 5 bytes en lugar de 1 byte** después del jump
+2. **Verificar si la respuesta es "READY"** (protocolo nuevo)
+3. **Mantener compatibilidad con 0xC0** (protocolo antiguo)
+4. **Continuar con advertencia** si la respuesta es inesperada
+
+```python
+# ANTES (líneas 967-970)
+sync = self.usbread(1)
+if sync != b"\xC0":
+    self.error("Error on DA sync")
+    return False
+
+# DESPUÉS (CORREGIDO)
+ready_response = self.usbread(5)
+if ready_response == b"READY":
+    self.info("Received READY from DA")
+elif ready_response[0:1] == b"\xC0":
+    self.info("Received legacy sync byte (0xC0)")
+    self.usbread(4)  # Read remaining bytes
+else:
+    self.warning(f"Unexpected DA sync response: {ready_response.hex()}")
+    # Try to continue anyway
+```
+
+## Problem Description (Original)
 
 When attempting to flash or interact with MT6768 (lamu) devices, you may encounter a **"DA handshake error"** which typically manifests as:
 

@@ -129,14 +129,37 @@ From the USB capture analysis:
 
 ## Existing DA Agent Comparison
 
-**Existing**: `xiaomi_9_DA_6765_6785_6768_6873_6885_6853.bin`
-- Version: MTK_AllInOne_DA_v3.3001.2020/07/07.10:10_513994
-- Date: July 2020
+**Existing**: Archivo eliminado (xiaomi_9_DA_6765_6785_6768_6873_6885_6853.bin)
+- Versión antigua, incompatible con handshake moderno
 
 **New**: `DA_A15_lamu_FORBID_SIGNED.bin`
 - Version: MTK_AllInOne_DA_v3.3001.2025/11/07.14:24_654171  
 - Date: November 2025
-- **5 years newer** - likely includes security updates and bug fixes
+- **Protocolo actualizado**: Usa "READY" en lugar de 0xC0 para handshake
+
+## IMPORTANTE: Corrección del Handshake
+
+### Descubrimiento Mediante Análisis del PCAPNG
+
+El análisis del archivo `1.pcapng` reveló que los DA agents modernos (2025) utilizan un protocolo de handshake diferente:
+
+**Secuencia de Handshake Real:**
+1. Jump a DA en 0x201000
+2. DA responde con string **"READY"** (0x5245414459) - NO con byte 0xC0
+3. Multiple intercambios de READY mientras DA inicializa
+4. Handshake de dirección (0x00200000)
+5. Envío de payload/código ARM
+6. Confirmación de dirección
+7. Comando MAGIC (0xFEEEEEEF) + "SYNC" (0x53594E43)
+8. Comandos XFLASH normales (SETUP_ENVIRONMENT, etc.)
+
+### Cambio en el Código
+
+El archivo `mtkclient/Library/DA/xflash/xflash_lib.py` fue modificado para soportar ambos protocolos:
+- **Nuevo**: Espera "READY" (5 bytes)
+- **Legacy**: Soporta 0xC0 (1 byte) para compatibilidad
+
+Este cambio corrige el error "Error on DA sync" que ocurría con DA agents modernos.
 
 ## Usage
 

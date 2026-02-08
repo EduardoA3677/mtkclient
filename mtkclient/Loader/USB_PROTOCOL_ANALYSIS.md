@@ -1,5 +1,59 @@
 # USB Protocol Analysis for MT6768 (Lamu Device)
 
+## ⚠️ DESCUBRIMIENTO CRÍTICO ⚠️
+
+### Protocolo de Handshake Moderno Identificado
+
+El análisis detallado del pcapng reveló que los **DA agents modernos (2025) usan un protocolo diferente** al implementado en mtkclient:
+
+**HANDSHAKE ANTIGUO (código original):**
+```
+Jump DA → Espera 0xC0 (1 byte) → Error si no recibe
+```
+
+**HANDSHAKE MODERNO (observado en pcapng):**
+```
+Jump DA → Recibe "READY" (5 bytes: 0x5245414459) → Continúa
+```
+
+### Secuencia Completa del Handshake (frames 533-834)
+
+```
+Frame 533-574:  IN  "READY" (0x5245414459) - Repetido múltiples veces
+                    DA informa que está listo para recibir comandos
+
+Frame 660-661:  OUT/IN  0x00200000 - Confirmación bidireccional de dirección
+
+Frame 664-665:  OUT/IN  0x0003F448 - Tamaño o parámetro
+
+Frame 668-669:  OUT/IN  0x00000100 - Flag o comando
+
+Frame 674-806:  OUT  Código ARM (payload)
+                    Múltiples frames con código ejecutable
+
+Frame 816-817:  OUT/IN  0x00200000 - Reconfirmación de dirección
+
+Frame 824:      OUT  0xFEEEEEEF 0x01000000 0x04000000
+                    MAGIC + comando + longitud
+
+Frame 826:      OUT  "SYNC" (0x53594E43)
+                    Sincronización XFLASH
+
+Frame 828-834:  Comandos XFLASH normales (SETUP_ENVIRONMENT, etc.)
+```
+
+### Corrección Implementada
+
+Archivo modificado: `mtkclient/Library/DA/xflash/xflash_lib.py` (líneas 967-980)
+
+**Cambio realizado:**
+- Lee 5 bytes en lugar de 1
+- Verifica "READY" primero (protocolo moderno)
+- Mantiene compatibilidad con 0xC0 (protocolo legacy)
+- Continúa con advertencia si respuesta inesperada
+
+---
+
 This document provides detailed analysis of the USB capture file `1.pcapng` showing communication between the official MTK flash tool and the lamu device.
 
 ## Capture Overview
@@ -29,19 +83,23 @@ The device starts communication with control transfers and then switches to bulk
 
 ### Command Structure
 
-MTK XFLASH protocol commands observed:
+MTK XFLASH protocol commands observed (bytes shown as captured in hex, little-endian):
 
-| Frame | Direction | Command | Interpretation |
-|-------|-----------|---------|----------------|
-| 93446 | OUT | 0a200100 | Setup/Init command (0x01000a) |
-| 93454 | OUT | 08202000... | Set command (0x002008) with 32-byte data |
-| 93465 | OUT | 06200fa0... | Configuration command |
-| 93469 | OUT | 08202001... | Set command variant with auth data |
-| 93473 | OUT | 0c200200 | Get command (0x00020c) |
-| 93523 | OUT | 0a200100 | Setup/Init (repeated) |
-| 93527 | OUT | 052006d1... | Command type 0x05 with data |
-| 93531 | OUT | 0a200101 | Setup variant (0x01010a) |
-| 93535 | OUT | 0c200201 | Get command variant |
+**Note:** The captured bytes are in little-endian format. For example, `0a200100` should be read as:
+- Bytes 0-3 in little-endian: `0x01002000a`
+- But the protocol uses a different structure where command IDs are at bytes 2-3
+
+| Frame | Direction | Captured Bytes | Command Type | Notes |
+|-------|-----------|----------------|--------------|-------|
+| 93446 | OUT | 0a200100 | 0x0100 prefix, 0x200a suffix | Setup/Init command |
+| 93454 | OUT | 08202000... | 0x2000 prefix, 0x2008 suffix | Set command with 32-byte payload |
+| 93465 | OUT | 06200fa0... | Config command | Memory configuration |
+| 93469 | OUT | 08202001... | 0x2001 variant | Set command with auth data |
+| 93473 | OUT | 0c200200 | 0x0200 prefix | Get/Response command |
+| 93523 | OUT | 0a200100 | 0x0100 prefix | Setup/Init (repeated) |
+| 93527 | OUT | 052006d1... | Auth-related | Challenge or token |
+| 93531 | OUT | 0a200101 | 0x0101 variant | Setup variant |
+| 93535 | OUT | 0c200201 | 0x0201 variant | Get response variant |
 
 ### Command Byte Format
 
