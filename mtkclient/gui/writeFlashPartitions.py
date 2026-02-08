@@ -10,6 +10,7 @@ sys.excepthook = trap_exc_during_debug
 class WriteFlashWindow(QObject):
     enableButtonsSignal = Signal()
     disableButtonsSignal = Signal()
+    sendToLogSignal = Signal(str)  # FIX: Declare signal to avoid AttributeError
 
     def __init__(self, ui, parent, da_handler, sendToLog):  # def __init__(self, *args, **kwargs):
         super(WriteFlashWindow, self).__init__(parent)
@@ -19,6 +20,7 @@ class WriteFlashWindow(QObject):
         self.fdialog = FDialog(parent)
         self.da_handler = da_handler
         self.ui = ui
+        # FIX: Initialize sendToLogSignal early to avoid race condition
 
     def writePartDone(self):
         self.sendToLogSignal.emit("write done!")
@@ -27,20 +29,24 @@ class WriteFlashWindow(QObject):
         self.folder = self.fdialog.opendir(self.tr("Select input directory"))
         if self.folder:
             for partition in self.parent.writepartitionCheckboxes:
-                checkbox, lineedit, button = self.parent.writepartitionCheckboxes[partition]['box']
-                for root, dirs, files in os.walk(self.folder):
-                    for file in files:
-                        if file in [partition + ".bin", partition + ".img"]:
-                            lineedit.setText(os.path.join(root, file))
-                            lineedit.setDisabled(False)
-                            checkbox.setChecked(True)
-                            break
-                    break
+                # FIX: Add safety check to prevent tuple unpacking errors
+                partition_data = self.parent.writepartitionCheckboxes[partition].get('box')
+                if partition_data and len(partition_data) == 3:
+                    checkbox, lineedit, button = partition_data
+                    for root, dirs, files in os.walk(self.folder):
+                        for file in files:
+                            if file in [partition + ".bin", partition + ".img"]:
+                                lineedit.setText(os.path.join(root, file))
+                                lineedit.setDisabled(False)
+                                checkbox.setChecked(True)
+                                break
+                        break
 
     def writePartition(self):
         self.disableButtonsSignal.emit()
         self.parent.Status["rpmb"] = False
-        thread = asyncThread(parent=self, n=0, function=self.writePartitionAsync, parameters=[])
+        # FIX: Use self.parent instead of self as parent for asyncThread
+        thread = asyncThread(parent=self.parent, n=0, function=self.writePartitionAsync, parameters=[])
         thread.sendToLogSignal.connect(self.sendToLog)
         thread.sendUpdateSignal.connect(self.parent.updateState)
         thread.sendToProgressSignal.connect(self.parent.updateProgress)

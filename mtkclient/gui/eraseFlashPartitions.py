@@ -11,6 +11,7 @@ sys.excepthook = trap_exc_during_debug
 class EraseFlashWindow(QObject):
     enableButtonsSignal = Signal()
     disableButtonsSignal = Signal()
+    sendToLogSignal = Signal(str)  # FIX: Declare signal to avoid AttributeError
 
     def __init__(self, ui, parent, da_handler, sendToLog):  # def __init__(self, *args, **kwargs):
         super(EraseFlashWindow, self).__init__(parent)
@@ -20,6 +21,7 @@ class EraseFlashWindow(QObject):
         self.fdialog = FDialog(parent)
         self.da_handler = da_handler
         self.ui = ui
+        # FIX: Initialize sendToLogSignal early to avoid race condition
 
     def erasePartDone(self):
         self.sendToLogSignal.emit("erase done!")

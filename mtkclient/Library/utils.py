@@ -9,6 +9,7 @@ import shutil
 import stat
 import struct
 import sys
+from pathlib import Path
 from struct import unpack, pack
 
 from mtkclient.Library.gui_utils import structhelper_io
@@ -543,3 +544,128 @@ def write_object(definition, *args):
     obj['object_size'] = len(data)
     obj['raw_data'] = data
     return obj
+
+
+# ============================================================================
+# Windows Compatibility Functions
+# ============================================================================
+
+def ensure_directory_exists(directory_path):
+    """
+    Ensure a directory exists, creating it if necessary.
+    Cross-platform compatible (Windows, Linux, macOS).
+
+    Args:
+        directory_path: Path to the directory (str or Path object)
+
+    Returns:
+        Path: Path object of the directory
+    """
+    path = Path(directory_path)
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def safe_path(*parts):
+    """
+    Create a cross-platform safe path from multiple parts.
+    Replaces hardcoded / or \\ with os.path.join().
+
+    Args:
+        *parts: Path components to join
+
+    Returns:
+        str: Platform-appropriate path
+
+    Examples:
+        safe_path('out', 'nvram.img') -> 'out/nvram.img' on Linux, 'out\\nvram.img' on Windows
+        safe_path('logs', 'log.txt') -> 'logs/log.txt' on Linux, 'logs\\log.txt' on Windows
+    """
+    return os.path.join(*parts)
+
+
+def safe_open(filepath, mode='r', encoding=None, **kwargs):
+    """
+    Open a file with proper encoding and error handling.
+    Automatically uses UTF-8 encoding for text files on Windows.
+
+    Args:
+        filepath: Path to file
+        mode: File mode ('r', 'w', 'rb', 'wb', etc.)
+        encoding: Text encoding (auto-detects UTF-8 for text modes)
+        **kwargs: Additional arguments for open()
+
+    Returns:
+        File object
+
+    Examples:
+        with safe_open('config.json', 'r') as f:
+            data = json.load(f)
+    """
+    # Auto-detect encoding for text modes on Windows
+    if encoding is None and 'b' not in mode:
+        encoding = 'utf-8'
+
+    # Ensure parent directory exists for write modes
+    if 'w' in mode or 'a' in mode:
+        filepath = Path(filepath)
+        if filepath.parent != Path('.'):
+            ensure_directory_exists(filepath.parent)
+        filepath = str(filepath)
+
+    return open(filepath, mode, encoding=encoding, **kwargs)
+
+
+def read_json_file(filepath):
+    """
+    Read a JSON file with proper UTF-8 encoding.
+
+    Args:
+        filepath: Path to JSON file
+
+    Returns:
+        dict: Parsed JSON data
+
+    Raises:
+        FileNotFoundError: If file doesn't exist
+        json.JSONDecodeError: If file contains invalid JSON
+    """
+    with safe_open(filepath, 'r') as f:
+        return json.load(f)
+
+
+def write_json_file(filepath, data, indent=None):
+    """
+    Write data to a JSON file with proper UTF-8 encoding.
+
+    Args:
+        filepath: Path to JSON file
+        data: Data to write (will be JSON serialized)
+        indent: JSON indentation level (None for compact, 2 or 4 for pretty)
+
+    Returns:
+        Path: Path to written file
+    """
+    with safe_open(filepath, 'w') as f:
+        json.dump(data, f, indent=indent)
+    return Path(filepath)
+
+
+def get_log_directory():
+    """
+    Get the logs directory, creating it if necessary.
+
+    Returns:
+        Path: Path to logs directory
+    """
+    return ensure_directory_exists('logs')
+
+
+def get_output_directory():
+    """
+    Get the output directory, creating it if necessary.
+
+    Returns:
+        Path: Path to output directory
+    """
+    return ensure_directory_exists('out')

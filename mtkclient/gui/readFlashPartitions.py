@@ -10,6 +10,7 @@ sys.excepthook = trap_exc_during_debug
 class ReadFlashWindow(QObject):
     enableButtonsSignal = Signal()
     disableButtonsSignal = Signal()
+    sendToLogSignal = Signal(str)  # FIX: Declare signal to avoid AttributeError
 
     def __init__(self, ui, parent, da_handler, sendToLog):  # def __init__(self, *args, **kwargs):
         super(ReadFlashWindow, self).__init__(parent)
@@ -20,6 +21,8 @@ class ReadFlashWindow(QObject):
         self.fdialog = FDialog(parent)
         self.da_handler = da_handler
         self.ui = parent.ui
+        # FIX: Initialize sendToLogSignal early to avoid race condition
+        # It will be reassigned later by toolkit, but this prevents AttributeError
 
     def dumpPartDone(self):
         self.sendToLogSignal.emit("dump done!")

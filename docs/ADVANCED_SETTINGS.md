@@ -212,19 +212,156 @@ python3 -c "from mtkclient.gui.settings_dialog import SettingsDialog; print('OK'
 ## Troubleshooting
 
 ### Settings Not Persisting
-- Check that config object is properly passed to dialog
-- Verify accept() is called (OK button clicked)
-- Ensure config object is the same instance used by device handler
+
+**Symptoms**: Changes made in the Advanced Settings dialog don't take effect.
+
+**Root Causes & Solutions**:
+
+1. **Config object not passed correctly**
+   - **Check**: Dialog receives config via `SettingsDialog(config, parent)`
+   - **Verify**: In `mtk_gui.py`, dialog is created with `self.devhandler.da_handler.mtk.config`
+   - **Fix**: Ensure you pass the actual config instance, not a copy
+   ```python
+   # Correct:
+   dialog = SettingsDialog(self.devhandler.da_handler.mtk.config, self)
+   
+   # Wrong:
+   dialog = SettingsDialog(MtkConfig(), self)  # Creates new config!
+   ```
+
+2. **Dialog cancelled instead of accepted**
+   - **Check**: User must click "OK" button (not "Cancel" or close X)
+   - **Verify**: `dialog.exec() == QDialog.DialogCode.Accepted` returns True
+   - **Implementation**: `accept()` method calls `save_settings()` before closing
+   ```python
+   def accept(self):
+       self.save_settings()  # This updates config in-place
+       super().accept()
+   ```
+
+3. **Config not the same instance**
+   - **Check**: Dialog stores reference in `self.config = config`
+   - **Verify**: All modifications update this reference in-place
+   - **Note**: Config object is passed by reference, not copied
 
 ### File Browsers Not Working
-- Check file filters in browse_file() calls
-- Verify QFileDialog is properly imported
-- Check file permissions
+
+**Symptoms**: File browser doesn't open, shows wrong files, or can't select files.
+
+**Root Causes & Solutions**:
+
+1. **QFileDialog not imported**
+   - **Check**: Line 9 in settings_dialog.py imports QFileDialog
+   ```python
+   from PySide6.QtWidgets import (
+       QDialog, ..., QFileDialog, ...
+   )
+   ```
+   - **Verify**: No ImportError when loading module
+
+2. **File filters incorrect format**
+   - **Correct format**: `"Description (*.ext);;All Files (*)"`
+   - **Examples in code**:
+     - Auth files: `"Auth Files (*.auth);;All Files (*)"`
+     - Cert files: `"Certificate Files (*.pem *.cert);;All Files (*)"`
+     - DA/Preloader: `"DA Files (*.bin);;All Files (*)"`
+   - **Note**: Double semicolon `;;` separates filter groups
+
+3. **File permissions**
+   - **Check**: User has read access to target directory
+   - **Try**: Browse from a different directory
+   - **Linux**: Verify no SELinux/AppArmor restrictions
+
+4. **Dialog returns but doesn't set value**
+   - **Implementation**: Only sets value if filename is not empty
+   ```python
+   filename, _ = QFileDialog.getOpenFileName(...)
+   if filename:  # Only set if user selected a file
+       line_edit.setText(filename)
+   ```
 
 ### Hex Values Not Parsing
-- Ensure 0x prefix for hex values
-- Check int() conversion in save_settings()
-- Add proper error handling for ValueError
+
+**Symptoms**: Hex values entered in fields don't save correctly or cause errors.
+
+**Root Causes & Solutions**:
+
+1. **Missing 0x prefix**
+   - **Supports both formats**: `0x1234` (hex) or `1234` (decimal)
+   - **Implementation**:
+   ```python
+   value = int(text, 16) if text.startswith('0x') else int(text)
+   ```
+   - **Examples**:
+     - VID: `0x0e8d` or `3725` (both work)
+     - var1: `0xA` or `10` (both work)
+
+2. **Invalid hex characters**
+   - **Valid hex**: 0-9, a-f, A-F (case-insensitive)
+   - **Invalid**: g-z, special characters, spaces
+   - **Error handling**: ValueError caught, invalid input silently ignored
+   ```python
+   try:
+       self.config.vid = int(vid_text, 16) if vid_text.startswith('0x') else int(vid_text)
+   except ValueError:
+       pass  # Keep existing config value
+   ```
+
+3. **Fields affected by hex parsing**:
+   - Connection tab: VID, PID
+   - Exploit tab: var1, UART address, DA address, BROM address, Watchdog address
+   - GPT tab: Sector size
+   - All handle ValueError exceptions gracefully
+
+4. **Best practices**:
+   - Use `0x` prefix for clarity when entering hex values
+   - Test with placeholder values before applying
+   - Check logs for any parsing errors (if debug mode enabled)
+   - Invalid entries are silently ignored (config unchanged)
+
+### Advanced Exploit Settings Not Saving
+
+**Symptoms**: UART/DA/BROM addresses or mode/appid don't persist.
+
+**Root Cause**: These fields require chipconfig object to be initialized.
+
+**Solution**:
+```python
+# Check implementation in save_settings():
+if hasattr(self.config, 'chipconfig') and self.config.chipconfig:
+    if uart_text:
+        self.config.chipconfig.uart = parsed_value
+    # ... etc
+```
+
+- **Verify**: `config.chipconfig` is not None
+- **When initialized**: After device connection established
+- **Workaround**: Connect device first, then modify advanced settings
+
+### Log Level Not Saving
+
+**Fixed in v2.1.2**: Previously only UART log level was saved.
+
+**Current implementation**:
+```python
+# Both levels now properly saved:
+self.config.uartloglevel = self.uartloglevel_combo.currentIndex()
+self.config.loglevel = self.loglevel_combo.currentIndex()
+```
+
+### Serial Port Not Saving
+
+**Fixed in v2.1.2**: Serial port input now properly handled.
+
+**Current implementation**:
+```python
+serialport_text = self.serialport_input.text().strip()
+if serialport_text:
+    if hasattr(self.config, 'serialportname'):
+        self.config.serialportname = serialport_text
+```
+
+**Note**: Use the "Serial Port" button in main GUI for auto-detection with device filtering.
 
 ## Related Files
 - `mtk.py`: CLI argument definitions
