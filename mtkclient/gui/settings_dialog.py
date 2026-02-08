@@ -362,10 +362,11 @@ class SettingsDialog(QDialog):
             settings['vid'] = self.vid_input.text()
         if self.pid_input.text():
             settings['pid'] = self.pid_input.text()
-        if self.serialport_input.text():
-            settings['serialport'] = self.serialport_input.text()
+        # Serial port: auto-detect takes precedence over manual entry
         if self.serialport_auto_check.isChecked():
             settings['serialport'] = 'DETECT'
+        elif self.serialport_input.text():
+            settings['serialport'] = self.serialport_input.text()
         settings['noreconnect'] = self.noreconnect_check.isChecked()
         settings['stock'] = self.stock_da_check.isChecked()
         settings['generatekeys'] = self.generatekeys_check.isChecked()

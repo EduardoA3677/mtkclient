@@ -31,10 +31,28 @@ jobs:
       - name: Build Console Version with PyInstaller (x64)
         run: |
           pyinstaller mtk_console.spec
+        
+      - name: Verify single-file executable
+        shell: powershell
+        run: |
+          Write-Host "Verifying single-file executable was created..."
+          if (Test-Path "dist/*.exe") {
+            Write-Host "Single-file executable created successfully"
+            Get-ChildItem dist/*.exe | ForEach-Object { Write-Host $_.Name }
+          } else {
+            Write-Error "No executable found in dist/"
+            exit 1
+          }
 
       - name: Build GUI Version with PyInstaller (x64)
         run: |
           pyinstaller mtk_standalone.spec
+          
+      - name: Verify GUI single-file executable
+        shell: powershell
+        run: |
+          Write-Host "Verifying GUI single-file executable was created..."
+          Get-ChildItem dist/mtk_standalone*.exe | ForEach-Object { Write-Host $_.Name ": " $_.Length " bytes" }
 
       - name: Upload Console Artifact
         uses: actions/upload-artifact@v4

@@ -21,6 +21,27 @@ El instalador realizará:
 - ✅ Creación de accesos directos en el escritorio y menú inicio
 - ✅ Configuración de PATH del sistema
 
+**Nota**: Los ejecutables incluidos son de **un solo archivo** (.exe) con todo el contenido embebido. No necesitan archivos adicionales para funcionar.
+
+### Método 2: Ejecutable Independiente (Sin Instalación)
+
+Si descargó solo el ejecutable compilado:
+
+1. Descargue `mtk_standalone_YYYYMMDD.exe` desde los artifacts del workflow
+2. Colóquelo en cualquier carpeta
+3. Haga doble clic para ejecutar
+
+**Ventajas**:
+- ✅ No requiere instalación de Python
+- ✅ No requiere instalación de dependencias
+- ✅ Un solo archivo .exe con todo incluido
+- ✅ Portátil: puede ejecutarse desde USB o cualquier ubicación
+- ✅ Comprimido con UPX para menor tamaño
+
+**Limitaciones**:
+- Requiere privilegios de administrador para operaciones USB
+- Puede necesitar drivers USB (Zadig) instalados por separado
+
 ### Método 2: Instalación Manual
 
 ```batch
