@@ -18,6 +18,8 @@ class SettingsDialog(QDialog):
 
     def __init__(self, config, parent=None):
         super().__init__(parent)
+        # Store reference to the config object - must be the same instance
+        # used by the device handler for settings to persist properly
         self.config = config
         self.setWindowTitle("Advanced Settings")
         self.setMinimumSize(600, 500)
@@ -370,7 +372,14 @@ class SettingsDialog(QDialog):
         return widget
 
     def browse_file(self, line_edit, file_filter):
-        """Open file browser and set selected file to line edit"""
+        """
+        Open file browser and set selected file to line edit.
+
+        Troubleshooting:
+        - QFileDialog is properly imported from PySide6.QtWidgets
+        - File filters use Qt format: "Description (*.ext);;All Files (*)"
+        - Returns empty string if user cancels, so we check before setting
+        """
         filename, _ = QFileDialog.getOpenFileName(
             self,
             "Select File",
@@ -459,13 +468,22 @@ class SettingsDialog(QDialog):
         self.debugmode_check.setChecked(self.config.debugmode)
 
     def save_settings(self):
-        """Save settings back to config"""
+        """
+        Save settings back to config.
+
+        Troubleshooting hex value parsing:
+        - Accepts both hex (0x prefix) and decimal values
+        - Properly handles ValueError for invalid input
+        - Invalid values are silently ignored (config unchanged)
+        """
         # Connection
         vid_text = self.vid_input.text().strip()
         if vid_text:
             try:
+                # Parse hex (0x...) or decimal values
                 self.config.vid = int(vid_text, 16) if vid_text.startswith('0x') else int(vid_text)
             except ValueError:
+                # Invalid input - keep existing config value
                 pass
 
         pid_text = self.pid_input.text().strip()
@@ -633,6 +651,14 @@ class SettingsDialog(QDialog):
         self.debugmode_check.setChecked(False)
 
     def accept(self):
-        """Save settings and close dialog"""
+        """
+        Save settings and close dialog.
+
+        Troubleshooting settings not persisting:
+        - This method is called when OK button is clicked
+        - save_settings() updates the config object in-place
+        - Config object must be the same instance used by device handler
+        - Check that dialog receives correct config in __init__
+        """
         self.save_settings()
         super().accept()
