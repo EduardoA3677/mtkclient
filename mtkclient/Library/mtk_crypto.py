@@ -13,6 +13,7 @@ from Cryptodome.PublicKey import RSA
 from Cryptodome.Util.number import long_to_bytes, bytes_to_long
 
 from mtkclient.Library.gui_utils import structhelper_io
+from mtkclient.Library.utils import ensure_directory_exists, safe_path, safe_open
 
 NVRAM_CUSTOM_KEY = bytearray(b"12abcdef")
 CODED_LOCK_PATTERN_SIZE = 12
@@ -571,7 +572,9 @@ def create_cssd(config, product: str = "thunder"):
             print("Can't find config.json")
             sys.exit(1)
         else:
-            config = json.loads(open("config.json", "r").read())
+            # Use safe_open for UTF-8 encoding (Windows fix)
+            with safe_open("config.json", "r") as f:
+                config = json.load(f)
     config["wifi_mac"] = config["wifi_mac"].upper().replace(":", "")
     config["bt_mac"] = config["bt_mac"].upper().replace(":", "")
     if (len(config['product']) == 0 or
@@ -691,7 +694,9 @@ def adb_create_config():
     data["wifi_mac"] = adb_get_prop("ro.ril.oem.wifimac").upper()
     data["bt_mac"] = adb_get_prop("ro.ril.oem.btmac").upper()
     data["product"] = adb_get_prop("ro.miui.cust_device")
-    open("config.json", "w").write(json.dumps(data))
+    # Use safe_open for UTF-8 encoding (Windows fix)
+    with safe_open("config.json", "w") as f:
+        json.dump(data, f, indent=2)
 
 
 def create_devinfo():
@@ -702,7 +707,9 @@ def create_devinfo():
     data["wifi_mac"] = "04C8072A36C8"
     data["bt_mac"] = "04C8072A36C7"
     data["product"] = "begonia"
-    open("config.json", "w").write(json.dumps(data))
+    # Use safe_open for UTF-8 encoding (Windows fix)
+    with safe_open("config.json", "w") as f:
+        json.dump(data, f, indent=2)
 
     """
     $cssd = $header.$cssd;
@@ -728,10 +735,16 @@ def create_devinfo():
         bt_size = unpack('V', nvram, bt_offset - 4)[1]
         bt_offset = toc_size + unpack('V', nvram, bt_offset - 8)[1]
         nvram = nvram.replace(b"/CALIBRAT/", b"/CALIBRUH/")
-        os.path.mkdir('out')
-        open('out/nvram.img','wb').write(nvram)
+        
+        # Ensure output directory exists (Windows fix)
+        ensure_directory_exists('out')
+        nvram_path = safe_path('out', 'nvram.img')
+        
+        # Write nvram with proper file handling (Windows fix)
+        with safe_open(nvram_path, 'wb') as f:
+            f.write(nvram)
 
-    with open('out/nvram.img', 'r+b') as wf:
+    with safe_open(nvram_path, 'r+b') as wf:
         wf.seek(cssd_offset)
         wf.write(cssd)
         wf.seek(wifi_offset + 4)

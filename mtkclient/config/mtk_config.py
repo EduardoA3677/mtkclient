@@ -2,6 +2,7 @@ import os
 import logging
 from mtkclient.Library.gui_utils import LogBase
 from mtkclient.config.brom_config import Chipconfig, DAmodes, hwconfig
+from mtkclient.Library.utils import ensure_directory_exists
 
 try:
     from PySide6.QtCore import QObject
@@ -70,6 +71,8 @@ class MtkConfig(metaclass=LogBase):
         self.otp = None
         self.stock = False
         if loglevel == logging.DEBUG:
+            # Ensure logs directory exists (Windows fix)
+            ensure_directory_exists("logs")
             logfilename = os.path.join("logs", "log.txt")
             fh = logging.FileHandler(logfilename)
             self.__logger.addHandler(fh)
