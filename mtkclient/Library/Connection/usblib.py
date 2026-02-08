@@ -434,7 +434,7 @@ class UsbClass(DeviceClass):
                     self.debug(str(err))
                     if 'No such device' in str(err):
                         self.error(str(err))
-                        sys.exit(1)
+                        return False  # Gracefully return False instead of hard exit
                     # print("Error while writing")
                     # time.sleep(0.01)
                     i += 1
@@ -523,7 +523,7 @@ class UsbClass(DeviceClass):
                     return b""
                 elif "No such device" in error:
                     self.error("Device disconnected")
-                    sys.exit(1)
+                    return b""  # Gracefully return empty bytes instead of hard exit
                 else:
                     self.info(repr(e))
                     return b""

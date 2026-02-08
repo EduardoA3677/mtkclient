@@ -161,7 +161,7 @@ class Port(metaclass=LogBase):
 
             except Exception as e:  # Includes USBError, timeout, pipe error
                 self.debug(f"Handshake attempt {attempt + 1} failed: {e}")
-                time.sleep(0.01)  # Short backoff
+                time.sleep(0.3)  # Increased backoff for Windows USB stability
 
             # Optional: flush input buffer before retry
             try:

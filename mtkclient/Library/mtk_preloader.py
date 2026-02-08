@@ -157,6 +157,7 @@ class Preloader(metaclass=LogBase):
         res = False
         maxtries = 100
         tries = 0
+        backoff_delay = 0.5  # Start with 0.5 second delay
         while not res and tries < 1000:
             if self.mtk.serialportname:
                 res = self.mtk.port.serial_handshake(maxtries=maxtries)
@@ -168,6 +169,10 @@ class Preloader(metaclass=LogBase):
                     self.config.set_gui_status(self.config.tr("Status: Handshake failed, retrying..."))
                 self.mtk.port.close()
                 tries += 1
+                # Exponential backoff with cap at 5 seconds
+                if tries > 1:
+                    time.sleep(min(backoff_delay, 5.0))
+                    backoff_delay *= 1.5  # Increase delay by 50% each time
         if tries == 1000:
             return False
 
