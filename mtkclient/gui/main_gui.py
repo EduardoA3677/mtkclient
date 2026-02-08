@@ -750,7 +750,7 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"MTKClient v2.01", None))
-        self.actionRead_partition_s.setText(QCoreApplication.translate("MainWindow", u"Quit", None))
+        self.actionRead_partition_s.setText(QCoreApplication.translate("MainWindow", u"Read partition(s)", None))
         self.actionRead_full_flash.setText(QCoreApplication.translate("MainWindow", u"Read full flash", None))
         self.actionRead_offset.setText(QCoreApplication.translate("MainWindow", u"Read at offset", None))
         self.actionWrite_partition_s.setText(QCoreApplication.translate("MainWindow", u"Write partition(s)", None))
