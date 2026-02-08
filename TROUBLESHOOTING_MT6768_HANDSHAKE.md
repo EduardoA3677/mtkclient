@@ -296,10 +296,11 @@ Before reporting issues, verify:
    - Some devices require bootloader unlock first
    - Check manufacturer documentation
 
-2. **Try older DA versions:**
+2. **Try other DA agents:**
    ```bash
-   # Use the xiaomi DA which also supports MT6768
-   python mtk.py <command> --loader xiaomi_9_DA_6765_6785_6768_6873_6885_6853.bin
+   # Use the generic MTK DA agents
+   python mtk.py <command> --loader MTK_DA_V5.bin
+   python mtk.py <command> --loader MTK_DA_V6.bin
    ```
 
 3. **Boot to META mode:**

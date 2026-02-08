@@ -129,10 +129,9 @@ From the USB capture analysis:
 
 ## Existing DA Agent Comparison
 
-**Existing**: Archivo eliminado (xiaomi_9_DA_6765_6785_6768_6873_6885_6853.bin)
-- Versión antigua, incompatible con handshake moderno
+**Previous DA agents removed**: All third-party DA agents (including Xiaomi variants) have been removed from the repository.
 
-**New**: `DA_A15_lamu_FORBID_SIGNED.bin`
+**Current**: `DA_A15_lamu_FORBID_SIGNED.bin`
 - Version: MTK_AllInOne_DA_v3.3001.2025/11/07.14:24_654171  
 - Date: November 2025
 - **Protocolo actualizado**: Usa "READY" en lugar de 0xC0 para handshake

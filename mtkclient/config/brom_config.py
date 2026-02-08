@@ -1184,34 +1184,41 @@ hwconfig = {
         name="MT6765/MT8768t",
         description="Helio P35/G35",
         loader="mt6765_payload.bin"),
+    # MT6768/MT6769 - Helio P65/G85 (k68v1)
+    # Verified configuration based on:
+    # - preloader_lamu.bin analysis (DA payload addr @ 0x201000)
+    # - DA_A15_lamu_FORBID_SIGNED.bin structure (3 regions, XFLASH mode)
+    # - 1.pcapng USB capture (confirmed addresses and handshake)
+    # DA Region 2: 0x0003F448 bytes @ 0x00200000 with 0x100 signature
+    # Handshake: Modern DA agents (2025+) send "READY" (0x5245414459)
     0x707: Chipconfig(
         var1=0x25,
         watchdog=0x10007000,
         uart=0x11002000,
         brom_payload_addr=0x100A00,
-        da_payload_addr=0x201000,
-        pl_payload_addr=0x40200000,  #
+        da_payload_addr=0x201000,  # Confirmed in preloader binary @ offset 0x23C
+        pl_payload_addr=0x40200000,
         gcpu_base=0x10050000,
-        sej_base=0x1000A000,  # hacc
-        dxcc_base=0x10210000,
-        cqdma_base=0x10212000,
+        sej_base=0x1000A000,  # hacc - Hardware AES Crypto Controller
+        dxcc_base=0x10210000,  # DXCC crypto engine
+        cqdma_base=0x10212000,  # CQ-DMA controller
         ap_dma_mem=0x11000000 + 0x1A0,
         blacklist=[(0x10282C, 0x0), (0x00105994, 0)],
         blacklist_count=0x0000000A,
-        send_ptr=(0x10286c, 0xc190),
+        send_ptr=(0x10286c, 0xc190),  # For Kamakiri2 exploit
         ctrl_buffer=0x00102A28,
         cmd_handler=0x0000CF15,
-        brom_register_access=(0xc598, 0xc650),
-        meid_addr=0x102AF8,
-        socid_addr=0x102b08,
-        prov_addr=0x1054F4,
+        brom_register_access=(0xc598, 0xc650),  # For exploit memory access
+        meid_addr=0x102AF8,  # Mobile Equipment ID address
+        socid_addr=0x102b08,  # SoC ID address
+        prov_addr=0x1054F4,  # Provisioning address
         misc_lock=0x1001a100,
-        efuse_addr=0x11ce0000,
-        damode=DAmodes.XFLASH,
-        dacode=0x6768,
+        efuse_addr=0x11ce0000,  # E-fuse base address
+        damode=DAmodes.XFLASH,  # Mode 5 - uses XFLASH protocol with MAGIC 0xFEEEEEEF
+        dacode=0x6768,  # DA code matches hwcode
         name="MT6768/MT6769",
         description="Helio P65/G85 k68v1",
-        loader="mt6768_payload.bin"),
+        loader="mt6768_payload.bin"),  # Kamakiri2 exploit payload
     0x788: Chipconfig(
         var1=0xA,
         watchdog=0x10007000,
