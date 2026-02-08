@@ -1,18 +1,47 @@
-__pycache__
-# Compiled python modules.
-*.pyc
-.idea
-# Exclude DA binaries except specific Lamu files
-DA_*.bin
-!mtkclient/Loader/DA_A15_lamu_FORBID_SIGNED.bin
+# Flash Tool Files (too large for repo)
+*.dll
+*.exe
+flashtool.zip
+Qt*.dll
+FlashToolLib*.dll
+codecs/
+imageformats/
+sqldrivers/
+Setup/
+Tools/
 
-# Setuptools distribution folder.
-/dist/
+# Config files from flash tool
+*.ini
+*.xml
+*.xsd
+Relese Note.txt
+sign_info.txt
 
-# Python egg metadata, regenerated from source files by setuptools.
-/*.egg-info
-/*.egg
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
 
-# Pyinstaller stuff
-build
-dist
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temp files
+*.tmp
+*.log
+logs/
+
+# Keep these partition dumps
+!DA_A15_lamu_FORBID_SIGNED.bin
+!preloader_lamu.bin
+!seccfg.bin
+!nvdata.bin
+!persist.bin
+!proinfo.bin
