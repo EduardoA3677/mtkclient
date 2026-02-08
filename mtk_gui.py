@@ -29,11 +29,22 @@ from mtkclient.config.payloads import PathConfig
 from mtkclient.gui.main_gui import Ui_MainWindow
 import os
 import serial.tools.list_ports
+import re
 
 
 lock = threading.Lock()
 
 os.environ['QT_MAC_WANTS_LAYER'] = '1'  # This fixes a bug in pyside2 on MacOS Big Sur
+
+
+def natural_sort_key(port_device):
+    """
+    Natural sort key for COM ports (Windows) and device names.
+    Handles COM1, COM2, COM10 properly and /dev/ttyUSB0, /dev/ttyUSB1, etc.
+    """
+    # Extract numbers from the device name for proper sorting
+    parts = re.split(r'(\d+)', port_device)
+    return [int(part) if part.isdigit() else part.lower() for part in parts]
 # TO do Move all GUI modifications to signals!
 # install exception hook: without this, uncaught exception would cause application to exit
 sys.excepthook = trap_exc_during_debug
@@ -103,7 +114,14 @@ class SerialPortDialog(QDialog):
             self.ok_button.setEnabled(False)
             return
 
-        for port in sorted(ports, key=lambda x: x.device):
+        # MediaTek VID list for auto-detection
+        mtk_vids = [0x0E8D, 0x1004, 0x22d9, 0x0FCE]  # MediaTek, LG, OPPO, Sony
+        mtk_port_index = -1
+        
+        # Use natural sorting for better COM port ordering (COM1, COM2, COM10, etc.)
+        sorted_ports = sorted(ports, key=lambda x: natural_sort_key(x.device))
+        
+        for idx, port in enumerate(sorted_ports):
             # Show device name and description
             display_text = f"{port.device}"
             if port.description and port.description != "n/a":
@@ -113,10 +131,20 @@ class SerialPortDialog(QDialog):
 
             item = QListWidgetItem(display_text)
             item.setData(Qt.ItemDataRole.UserRole, port.device)  # Store actual device path
+            
+            # Mark MediaTek devices with a prefix for easy identification
+            if port.vid in mtk_vids:
+                display_text = "⭐ " + display_text
+                item.setText(display_text)
+                if mtk_port_index == -1:  # Remember first MediaTek device
+                    mtk_port_index = idx
+            
             self.port_list.addItem(item)
 
-        # Select first port by default if available
-        if self.port_list.count() > 0:
+        # Auto-select MediaTek device if found, otherwise select first port
+        if mtk_port_index >= 0:
+            self.port_list.setCurrentRow(mtk_port_index)
+        elif self.port_list.count() > 0:
             self.port_list.setCurrentRow(0)
 
         self.update_ok_button()
@@ -137,12 +165,41 @@ class SerialPortDialog(QDialog):
         super().reject()
 
     @staticmethod
-    def get_serial_port(parent=None):
+    def detect_mtk_port():
+        """
+        Automatically detect MediaTek device port without showing dialog.
+        Returns:
+            str: Auto-detected port, or '' if not found
+        """
+        ports = serial.tools.list_ports.comports()
+        mtk_vids = [0x0E8D, 0x1004, 0x22d9, 0x0FCE]  # MediaTek, LG, OPPO, Sony
+        
+        # Find all MediaTek devices
+        mtk_ports = [p for p in ports if p.vid in mtk_vids]
+        
+        # If exactly one MediaTek device found, return it automatically
+        if len(mtk_ports) == 1:
+            return mtk_ports[0].device
+        
+        return ""
+    
+    @staticmethod
+    def get_serial_port(parent=None, auto_detect=True):
         """
         Static method to show the dialog and return the selected port.
+        Args:
+            parent: Parent widget
+            auto_detect: If True, automatically select port if only one MediaTek device found
         Returns:
             str: Selected port (e.g., '/dev/ttyUSB0' or 'COM3'), or '' if cancelled/no selection
         """
+        # Try auto-detection first if enabled
+        if auto_detect:
+            auto_port = SerialPortDialog.detect_mtk_port()
+            if auto_port:
+                return auto_port
+        
+        # Show dialog for manual selection
         dialog = SerialPortDialog(parent)
         result = dialog.exec()
         return dialog.selected_port if result == QDialog.DialogCode.Accepted else ""
