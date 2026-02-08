@@ -603,7 +603,12 @@ class SettingsDialog(QDialog):
         self.config.debugmode = self.debugmode_check.isChecked()
 
     def restore_defaults(self):
-        """Restore default settings"""
+        """
+        Restore default settings.
+        
+        Note: This only resets the UI widgets to defaults.
+        User must click OK to save these changes to config.
+        """
         # Connection
         self.vid_input.clear()
         self.pid_input.clear()
