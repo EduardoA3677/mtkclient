@@ -1,0 +1,47 @@
+Release Notes
+
+工具名称:
+	Lamu_Flash_Tool_Console_LMSA_5.2404.03
+版本号:
+
+	03.000
+发布日期:
+	
+	2025-11-28
+
+修改说明:
+	1，取消DA 串口log打印
+//-------------------------------
+
+
+工具名称:
+	Lamu_Flash_Tool_Console_LMSA_5.2404.02
+版本号:
+
+	02.000
+发布日期:
+	
+	2025-11-14
+
+修改说明:
+	1，动态配置DA限制要求
+	2，配置Lamuc的DA
+	TN_MTK_TSDC_Flashtool_V5.2404.1.exe  -c download -d Lamu_FlashTool_Console_LMSA_5.2404.02\DA_A15_lamu_FORBID_SIGNED.bin -s MT6768_Android_scatter.txt
+//-------------------------------
+
+工具名称:
+	Lamu_Flash_Tool_Console_AfterSale_exe_5.2404.01.000
+版本号:
+
+	01.000
+
+发布日期:
+	
+	2024-10-24
+
+修改说明:
+	1，download only下载之后，增加seccfg，misc分区擦除。
+	2，本地DA SLA鉴权
+	2，命令行内容：
+	TN_MTK_TSDC_Flashtool_V5.2404.1.exe  -c download -d D:\TN_WORK\Code\MTK\Flashtool\2404\329\Factory\SP_Flash_Tool_Factory_exe_5.2404.02.000\DA_A15_lamu.bin -s D:\TN_WORK\Package\fastboot_lamu_factory_userdebug_15_VVTA35.51-F.4_c012cf_test-keys\MT6768_Android_scatter.txt
+//-------------------------------
