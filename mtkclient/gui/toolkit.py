@@ -2,6 +2,7 @@ import math
 import os
 import sys
 import time
+import traceback
 import datetime as dt
 from PySide6.QtCore import Signal, QThread, Slot, Property
 from PySide6.QtWidgets import QFileDialog, QCheckBox
@@ -119,7 +120,6 @@ class asyncThread(QThread):
             # Gracefully handle exceptions to prevent QThread crashes on Windows
             error_msg = f"Thread error: {type(e).__name__}: {str(e)}"
             self.sendToLogSignal.emit(error_msg)
-            import traceback
             self.sendToLogSignal.emit(traceback.format_exc())
 
 

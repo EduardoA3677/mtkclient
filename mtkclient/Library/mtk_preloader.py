@@ -171,8 +171,8 @@ class Preloader(metaclass=LogBase):
                 tries += 1
                 # Exponential backoff with cap at 5 seconds
                 if tries > 1:
-                    time.sleep(min(backoff_delay, 5.0))
-                    backoff_delay *= 1.5  # Increase delay by 50% each time
+                    backoff_delay = min(backoff_delay * 1.5, 5.0)  # Increase delay by 50% each time, cap at 5s
+                    time.sleep(backoff_delay)
         if tries == 1000:
             return False
 
