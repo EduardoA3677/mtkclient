@@ -24,6 +24,7 @@ from mtkclient.gui.readFlashPartitions import ReadFlashWindow
 from mtkclient.gui.writeFlashPartitions import WriteFlashWindow
 from mtkclient.gui.eraseFlashPartitions import EraseFlashWindow
 from mtkclient.gui.toolsMenu import generateKeysMenu, UnlockMenu
+from mtkclient.gui.settings_dialog import SettingsDialog
 from mtkclient.gui.toolkit import asyncThread, trap_exc_during_debug, convert_size, CheckBox, FDialog, TimeEstim
 from mtkclient.config.payloads import PathConfig
 from mtkclient.gui.main_gui import Ui_MainWindow
@@ -249,6 +250,11 @@ class MainWindow(QMainWindow):
         self.ui.consettings2btn.clicked.connect(self.selectPreloader)
         self.ui.iotcheck.clicked.connect(self.selectIoT)
         self.ui.serialportbtn.clicked.connect(self.openserialportdialog)
+        
+        # Add Advanced Settings menu item
+        self.actionAdvancedSettings = self.ui.menuFile.addAction("Advanced Settings...")
+        self.actionAdvancedSettings.triggered.connect(self.openAdvancedSettings)
+        
         self.thread = thread
         self.devhandler = devhandler
         self.readflash = None
@@ -280,6 +286,86 @@ class MainWindow(QMainWindow):
                 self.preloader = fname
                 self.devhandler.da_handler.mtk.config.preloader_filename = fname
                 self.devhandler.da_handler.mtk.config.preloader = open(fname,'rb').read()
+    
+    def openAdvancedSettings(self):
+        """Open advanced settings dialog"""
+        dialog = SettingsDialog(self, self.devhandler.da_handler.mtk.config)
+        dialog.settingsChanged.connect(self.applyAdvancedSettings)
+        dialog.exec()
+    
+    def applyAdvancedSettings(self, settings):
+        """Apply settings from the advanced settings dialog"""
+        config = self.devhandler.da_handler.mtk.config
+        
+        # Apply connection settings
+        if 'vid' in settings:
+            config.vid = settings['vid']
+        if 'pid' in settings:
+            config.pid = settings['pid']
+        if 'serialport' in settings:
+            self.devhandler.da_handler.mtk.serialportname = settings['serialport']
+        if 'noreconnect' in settings:
+            config.noreconnect = settings['noreconnect']
+        if 'stock' in settings:
+            config.stock = settings['stock']
+        if 'generatekeys' in settings:
+            config.generatekeys = settings['generatekeys']
+        if 'socid' in settings:
+            config.socid = settings['socid']
+        if 'write_preloader_to_file' in settings:
+            self.write_preloader_to_file = settings['write_preloader_to_file']
+        
+        # Apply auth settings
+        if 'auth' in settings:
+            config.auth = settings['auth']
+        if 'cert' in settings:
+            config.cert = settings['cert']
+        
+        # Apply exploit settings
+        if 'ptype' in settings:
+            config.ptype = settings['ptype']
+        if 'var1' in settings:
+            config.var1 = settings['var1']
+        if 'uart_addr' in settings:
+            config.uart_addr = settings['uart_addr']
+        if 'da_addr' in settings:
+            config.da_addr = settings['da_addr']
+        if 'brom_addr' in settings:
+            config.brom_addr = settings['brom_addr']
+        if 'wdt' in settings:
+            config.wdt = settings['wdt']
+        if 'mode' in settings:
+            config.mode = settings['mode']
+        if 'skipwdt' in settings:
+            config.skipwdt = settings['skipwdt']
+        if 'crash' in settings:
+            config.crash = settings['crash']
+        if 'appid' in settings:
+            config.appid = settings['appid']
+        
+        # Apply GPT settings
+        if 'sectorsize' in settings:
+            config.sectorsize = settings['sectorsize']
+        if 'gpt_num_part_entries' in settings:
+            config.gpt_num_part_entries = settings['gpt_num_part_entries']
+        if 'gpt_part_entry_size' in settings:
+            config.gpt_part_entry_size = settings['gpt_part_entry_size']
+        if 'gpt_part_entry_start_lba' in settings:
+            config.gpt_part_entry_start_lba = settings['gpt_part_entry_start_lba']
+        if 'parttype' in settings:
+            config.parttype = settings['parttype']
+        if 'skip' in settings:
+            config.skip = settings['skip']
+        
+        # Apply debug settings
+        if 'debugmode' in settings:
+            config.debugmode = settings['debugmode']
+        if 'loglevel' in settings:
+            config.loglevel = settings['loglevel']
+        if 'uartloglevel' in settings:
+            config.uartloglevel = settings['uartloglevel']
+        
+        self.sendToLog("Settings applied successfully")
 
     def showDebugInfo(self):
         self.ui.connectInfo.setHidden(True)

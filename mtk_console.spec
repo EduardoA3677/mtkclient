@@ -1,5 +1,10 @@
 # -*- mode: python ; coding: utf-8 -*-
+# PyInstaller spec file for MTKClient Console (mtk.py)
+# Creates a SINGLE-FILE executable with all dependencies embedded
+# Target: Windows x64
+
 from datetime import date
+import os
 
 today = date.today()
 block_cipher = None
@@ -8,7 +13,7 @@ block_cipher = None
 a = Analysis(['mtk.py'],
              pathex=[],
              binaries=[],
-             datas=[('mtkclient/Windows/*', '.'), ('mtkclient/payloads', 'mtkclient/payloads'), ('mtkclient/Loader', 'mtkclient/Loader'), ('mtkclient/Library/Filesystem/bin', 'mtkclient/Library/Filesystem/bin')],
+             datas=[('mtkclient/Windows/*', 'mtkclient/Windows'), ('mtkclient/payloads', 'mtkclient/payloads'), ('mtkclient/Loader', 'mtkclient/Loader'), ('mtkclient/Library/Filesystem/bin', 'mtkclient/Library/Filesystem/bin')],
              hiddenimports=[],
              hookspath=[],
              hooksconfig={},
@@ -21,11 +26,13 @@ a = Analysis(['mtk.py'],
 pyz = PYZ(a.pure, a.zipped_data,
              cipher=block_cipher)
 
+# EXE with a.binaries, a.zipfiles, a.datas creates a ONE-FILE executable
+# All dependencies are embedded in the single .exe file
 exe = EXE(pyz,
           a.scripts,
-          a.binaries,
-          a.zipfiles,
-          a.datas,  
+          a.binaries,  # Include binaries in exe (one-file mode)
+          a.zipfiles,  # Include zipfiles in exe (one-file mode)
+          a.datas,     # Include data files in exe (one-file mode)
           [],
           name='mtk_console_' + today.strftime("%Y%m%d"),
           debug=False,
@@ -36,6 +43,10 @@ exe = EXE(pyz,
           runtime_tmpdir=None,
           console=True,
           disable_windowed_traceback=False,
-          target_arch=None,
+          target_arch='x86_64',
           codesign_identity=None,
-          entitlements_file=None , icon='mtkclient\\icon.ico')
+          entitlements_file=None,
+          icon='mtkclient/icon.ico' if os.path.exists('mtkclient/icon.ico') else None)
+
+
+

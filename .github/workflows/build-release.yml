@@ -1,0 +1,150 @@
+name: Build Release Packages
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+  pull_request:
+
+jobs:
+  build-windows:
+    name: Build Windows x64 Executable
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          architecture: 'x64'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+          pip install -r requirements.txt
+
+      - name: Build Console Version with PyInstaller (x64)
+        run: |
+          pyinstaller mtk_console.spec
+        
+      - name: Verify single-file executable
+        shell: powershell
+        run: |
+          Write-Host "Verifying single-file executable was created..."
+          if (Test-Path "dist/*.exe") {
+            Write-Host "Single-file executable created successfully"
+            Get-ChildItem dist/*.exe | ForEach-Object { Write-Host $_.Name }
+          } else {
+            Write-Error "No executable found in dist/"
+            exit 1
+          }
+
+      - name: Build GUI Version with PyInstaller (x64)
+        run: |
+          pyinstaller mtk_standalone.spec
+          
+      - name: Verify GUI single-file executable
+        shell: powershell
+        run: |
+          Write-Host "Verifying GUI single-file executable was created..."
+          Get-ChildItem dist/mtk_standalone*.exe | ForEach-Object { Write-Host $_.Name ": " $_.Length " bytes" }
+
+      - name: Upload Console Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mtk-console-windows-x64
+          path: dist/mtk_console_*
+
+      - name: Upload GUI Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mtk-gui-windows-x64
+          path: dist/mtk_standalone_*
+
+  build-linux:
+    name: Build Linux Executable
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libusb-1.0-0-dev libfuse2 fuse
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+          pip install -r requirements.txt
+
+      - name: Build Console Version with PyInstaller
+        run: |
+          pyinstaller mtk_console.spec
+
+      - name: Build GUI Version with PyInstaller
+        run: |
+          pyinstaller mtk_standalone.spec
+
+      - name: Upload Console Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mtk-console-linux
+          path: dist/mtk_console_*
+
+      - name: Upload GUI Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mtk-gui-linux
+          path: dist/mtk_standalone_*
+
+  build-macos:
+    name: Build macOS Executable
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+          pip install -r requirements.txt
+
+      - name: Build Console Version with PyInstaller
+        run: |
+          pyinstaller mtk_console.spec
+
+      - name: Build GUI Version with PyInstaller
+        run: |
+          pyinstaller mtk_standalone.spec
+
+      - name: Upload Console Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mtk-console-macos
+          path: dist/mtk_console_*
+
+      - name: Upload GUI Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mtk-gui-macos
+          path: dist/mtk_standalone_*

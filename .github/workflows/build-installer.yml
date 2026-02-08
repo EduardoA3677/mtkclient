@@ -1,0 +1,105 @@
+name: Build Installer Packages
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-windows-installer:
+    name: Build Windows x64 Installer
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          architecture: 'x64'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+          pip install -r requirements.txt
+
+      - name: Build with PyInstaller (x64)
+        run: |
+          pyinstaller mtk_standalone.spec
+
+      - name: Create installer structure
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Force -Path installer
+          Copy-Item dist/mtk_standalone_* installer/
+          Copy-Item install.bat installer/
+          Copy-Item mtk_gui_admin.bat installer/
+          Copy-Item README.md installer/
+          Copy-Item README-INSTALLER-WINDOWS.md installer/
+          Copy-Item LICENSE installer/
+          Copy-Item -Recurse Setup installer/
+          Copy-Item requirements.txt installer/
+
+      - name: Compress installer
+        shell: powershell
+        run: |
+          Compress-Archive -Path installer/* -DestinationPath mtkclient-windows-x64-installer.zip
+
+      - name: Upload Installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-x64-installer
+          path: mtkclient-windows-x64-installer.zip
+
+  build-linux-installer:
+    name: Build Linux Installer
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libusb-1.0-0-dev libfuse2 fuse
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+          pip install -r requirements.txt
+
+      - name: Build with PyInstaller
+        run: |
+          pyinstaller mtk_standalone.spec
+
+      - name: Create installer structure
+        run: |
+          mkdir -p installer
+          cp dist/mtk_standalone_* installer/ || true
+          cp install.sh installer/
+          cp uninstall.sh installer/
+          cp README.md installer/
+          cp LICENSE installer/
+          cp -r Setup installer/
+          cp requirements.txt installer/
+          chmod +x installer/install.sh
+          chmod +x installer/uninstall.sh
+
+      - name: Create tarball
+        run: |
+          tar czf mtkclient-linux-installer.tar.gz installer/
+
+      - name: Upload Installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-installer
+          path: mtkclient-linux-installer.tar.gz
