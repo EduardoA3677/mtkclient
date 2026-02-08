@@ -404,9 +404,11 @@ class DAloader(metaclass=LogBase):
 
     def readfuses(self):
         if self.flashmode == DAmodes.XFLASH:
-            pass
+            self.error("readfuses is not supported in XFLASH mode")
+            return None
         elif self.flashmode == DAmodes.LEGACY:
-            pass
+            self.error("readfuses is not supported in LEGACY mode")
+            return None
         elif self.flashmode == DAmodes.XML:
             return self.xmlft.readfuses()
 
@@ -457,10 +459,10 @@ class DAloader(metaclass=LogBase):
     def encrypt_nvitem(self, filename=None, otp=None, seed=None, aeskey=None):
         with open(filename, "rb") as rf:
             if self.flashmode == DAmodes.XFLASH:
-                return self.xmlft.encrypt_nvitem(data=rf.read(), encrypt=False,
-                                                 otp=otp,
-                                                 seed=seed,
-                                                 aeskey=aeskey)
+                return self.xft.nvitem(data=rf.read(), encrypt=True,
+                                       otp=otp,
+                                       seed=seed,
+                                       aeskey=aeskey)
             elif self.flashmode == DAmodes.XML:
                 return self.xmlft.encrypt_nvitem(data=rf.read(),
                                                  otp=otp,

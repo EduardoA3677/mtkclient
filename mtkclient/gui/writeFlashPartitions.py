@@ -129,19 +129,19 @@ class WriteFlashWindow(QObject):
             if self.mtkClass.daloader.daconfig.storage.flashtype == "ufs":
                 self.flashsize = self.mtkClass.daloader.daconfig.storage.ufs.lu1_size
             else:
-                self.flashsize = self.mtkClass.daloader.daconfig.storage.emmc.boot1size
+                self.flashsize = self.mtkClass.daloader.daconfig.storage.emmc.boot1_size
         elif parttype == "boot2":
             if self.mtkClass.daloader.daconfig.storage.flashtype == "ufs":
                 self.flashsize = self.mtkClass.daloader.daconfig.storage.ufs.lu2_size
             else:
-                self.flashsize = self.mtkClass.daloader.daconfig.storage.emmc.boot2size
+                self.flashsize = self.mtkClass.daloader.daconfig.storage.emmc.boot2_size
         self.parttype = parttype
         self.parent.Status["totalsize"] = self.flashsize
         self.parent.Status["currentPartitionSize"] = self.flashsize
         self.parent.Status["currentPartition"] = parttype
         self.disableButtonsSignal.emit()
         if self.writeFile:
-            thread = asyncThread(parent=self, n=0, function=self.writeFlashAsync, parameters=[parttype])
+            thread = asyncThread(parent=self.parent, n=0, function=self.writeFlashAsync, parameters=[parttype])
             thread.sendToLogSignal.connect(self.sendToLog)
             thread.sendUpdateSignal.connect(self.parent.updateState)
             thread.start()

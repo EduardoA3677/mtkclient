@@ -12,6 +12,7 @@ sys.excepthook = trap_exc_during_debug
 class UnlockMenu(QObject):
     enableButtonsSignal = Signal()
     disableButtonsSignal = Signal()
+    sendToLogSignal = Signal(str)
 
     def __init__(self, ui, parent, da_handler: DaHandler, sendToLog):  # def __init__(self, *args, **kwargs):
         super(UnlockMenu, self).__init__(parent)
@@ -51,6 +52,7 @@ class UnlockMenu(QObject):
 class generateKeysMenu(QObject):
     enableButtonsSignal = Signal()
     disableButtonsSignal = Signal()
+    sendToLogSignal = Signal(str)
 
     def __init__(self, ui, parent, da_handler: DaHandler, sendToLog):  # def __init__(self, *args, **kwargs):
         super(generateKeysMenu, self).__init__(parent)

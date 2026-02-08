@@ -37,8 +37,8 @@ class TimeEstim:
                 minutes = sec // 60
                 sec = sec % 60
                 if minutes > 60:
-                    h = minutes // 24
-                    minutes = minutes % 24
+                    h = minutes // 60
+                    minutes = minutes % 60
                     hinfo = "%02dh:%02dm:%02ds" % (h, minutes, sec)
                 else:
                     hinfo = "%02dm:%02ds" % (minutes, sec)

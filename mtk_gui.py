@@ -341,7 +341,8 @@ class MainWindow(QMainWindow):
             if os.path.exists(fname):
                 self.preloader = fname
                 self.devhandler.da_handler.mtk.config.preloader_filename = fname
-                self.devhandler.da_handler.mtk.config.preloader = open(fname,'rb').read()
+                with open(fname, 'rb') as rf:
+                    self.devhandler.da_handler.mtk.config.preloader = rf.read()
 
     def openAdvancedSettings(self):
         """Open the Advanced Settings dialog"""
@@ -517,6 +518,7 @@ class MainWindow(QMainWindow):
         self.ui.writeboot2btn.setEnabled(False)
         self.ui.writerpmbbtn.setEnabled(False)
 
+        self.ui.erasepartitionsbtn.setEnabled(False)
         self.ui.eraseboot2btn.setEnabled(False)
         self.ui.erasepreloaderbtn.setEnabled(False)
         self.ui.eraserpmbbtn.setEnabled(False)
@@ -539,6 +541,7 @@ class MainWindow(QMainWindow):
         self.ui.writeboot2btn.setEnabled(True)
         self.ui.writerpmbbtn.setEnabled(True)
 
+        self.ui.erasepartitionsbtn.setEnabled(True)
         self.ui.eraseboot2btn.setEnabled(True)
         self.ui.erasepreloaderbtn.setEnabled(True)
         self.ui.eraserpmbbtn.setEnabled(True)
