@@ -7,6 +7,7 @@ from io import BytesIO
 from mtkclient.Library.Hardware.hwcrypto_sej import sej_cryptmode
 from mtkclient.Library.gui_utils import structhelper_io, logsetup, LogBase
 from mtkclient.config.mtk_config import MtkConfig
+from mtkclient.Library.cryptutils import CryptUtils
 
 
 class SecCfgV4(metaclass=LogBase):
@@ -79,6 +80,30 @@ class SecCfgV4(metaclass=LogBase):
         if _hash == dec_hash:
             self.hwtype = "SW"
         else:
+            # Try alternative SW keys for MT6768/Motorola devices
+            self.debug("Trying alternative SW crypto keys...")
+            alt_keys = [
+                # Variant 1: Alternative standard key
+                (b"1A52A367CB12C458965D32CD874B36B2", bytes.fromhex("57325A5A125497661254976657325A5A")),
+                # Variant 2: Reversed pattern  
+                (b"2B6B478B2CD365954C21BC3A7612A521", bytes.fromhex("5A5A32576696475212544766975A5A32")),
+                # Variant 3: Common variant
+                (b"48657368656E7365486973656E736548", bytes.fromhex("48697365486973654869736548697365")),
+                # Variant 4: Another common pattern
+                (b"0102030405060708090A0B0C0D0E0F10", bytes.fromhex("11121314151617181920212223242526")),
+            ]
+            
+            ctx = CryptUtils.Aes()
+            for idx, (key, iv) in enumerate(alt_keys):
+                try:
+                    dec_hash = ctx.aes_cbc(key=key, iv=iv, data=self.hash, decrypt=True)
+                    if _hash == dec_hash:
+                        self.hwtype = f"SW_ALT{idx+1}"
+                        self.info(f"Found SW alternative key #{idx+1}")
+                        return True
+                except Exception as e:
+                    self.debug(f"SW_ALT{idx+1} failed: {str(e)}")
+                    continue
             if self.custom_sej_hw is not None:
                 # ddata = self.protect(self.hash)
                 status, dec_hash = self.custom_sej_hw(encrypt=False,
