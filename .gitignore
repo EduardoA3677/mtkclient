@@ -2,7 +2,9 @@ __pycache__
 # Compiled python modules.
 *.pyc
 .idea
+# Exclude DA binaries except specific Lamu files
 DA_*.bin
+!mtkclient/Loader/DA_A15_lamu_FORBID_SIGNED.bin
 
 # Setuptools distribution folder.
 /dist/
