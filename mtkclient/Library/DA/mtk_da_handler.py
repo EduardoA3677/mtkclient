@@ -64,6 +64,13 @@ class DaHandler(metaclass=LogBase):
     @staticmethod
     def close():
         sys.exit(0)
+    
+    def get_pagesize(self):
+        """Safely get pagesize, handling Mock objects or invalid values"""
+        pagesize = self.config.pagesize
+        if not isinstance(pagesize, int) or pagesize <= 0:
+            return 512  # default fallback
+        return pagesize
 
     def dump_preloader_ram(self, write_preloader_to_file: bool = False):
         try:
@@ -458,22 +465,27 @@ class DaHandler(metaclass=LogBase):
                 addr = 0
         else:
             addr = offset
+        
+        # Get pagesize safely - handle case where it might be a Mock object
+        pagesize = self.get_pagesize()
+        
         if display:
             print(
-                f"Dumping sector {addr // self.config.pagesize}/addr {hex(addr)} with flash size {hex(length)} as {filename}.")
+                f"Dumping sector {addr // pagesize}/addr {hex(addr)} with flash size {hex(length)} as {filename}.")
         sys.stdout.flush()
         if self.mtk.daloader.readflash(addr=addr, length=length, filename=filename, parttype=parttype, display=display):
             if display:
                 print(
-                    f"Dumped sector {addr // self.config.pagesize}/addr {hex(addr)} with flash size {hex(length)} as {filename}.")
+                    f"Dumped sector {addr // pagesize}/addr {hex(addr)} with flash size {hex(length)} as {filename}.")
         else:
             if display:
                 print(
-                    f"Failed to dump sector {addr // self.config.pagesize}/addr {hex(addr)} with flash size {hex(length)} as {filename}.")
+                    f"Failed to dump sector {addr // pagesize}/addr {hex(addr)} with flash size {hex(length)} as {filename}.")
 
     def da_rs(self, start: int, sectors: int, filename: str, parttype: str, display: bool = True):
-        return self.mtk.daloader.readflash(addr=start * self.config.pagesize,
-                                           length=sectors * self.config.pagesize,
+        pagesize = self.get_pagesize()
+        return self.mtk.daloader.readflash(addr=start * pagesize,
+                                           length=sectors * pagesize,
                                            filename=filename, parttype=parttype, display=display)
 
     def da_ro(self, start: int, length: int, filename: str, parttype: str, display: bool = True):
@@ -664,10 +676,11 @@ class DaHandler(metaclass=LogBase):
         if parttype == "user" or parttype is None:
             wipedata = b"\x00" * 0x200000
             error = False
+            pagesize = self.get_pagesize()
             while sectors:
-                sectorsize = sectors * self.config.pagesize
+                sectorsize = sectors * pagesize
                 wsize = min(sectorsize, 0x200000)
-                if self.mtk.daloader.writeflash(addr=sector * self.config.pagesize,
+                if self.mtk.daloader.writeflash(addr=sector * pagesize,
                                                 length=wsize,
                                                 filename="",
                                                 wdata=wipedata[:wsize],
@@ -677,15 +690,16 @@ class DaHandler(metaclass=LogBase):
                         f"sector count {str(sectors)}.")
                     error = True
                     break
-                sectors -= (wsize // self.config.pagesize)
-                sector += (wsize // self.config.pagesize)
+                sectors -= (wsize // pagesize)
+                sector += (wsize // pagesize)
             if not error:
                 print(
                     f"Formatted sector {str(sector)} with sector count {str(sectors)}.")
         else:
             pos = 0
-            self.mtk.daloader.formatflash(addr=sector * self.config.pagesize,
-                                          length=min(sectors * self.config.pagesize, 0xF000000),
+            pagesize = self.get_pagesize()
+            self.mtk.daloader.formatflash(addr=sector * pagesize,
+                                          length=min(sectors * pagesize, 0xF000000),
                                           partitionname=None,
                                           parttype=parttype,
                                           display=True)
@@ -699,8 +713,9 @@ class DaHandler(metaclass=LogBase):
                 res = self.mtk.daloader.detect_partition(partition, parttype)
                 if res[0]:
                     rpartition = res[1]
-                    rsectors = min(sectors * self.config.pagesize,
-                                   rpartition.sectors * self.config.pagesize)
+                    pagesize = self.get_pagesize()
+                    rsectors = min(sectors * pagesize,
+                                   rpartition.sectors * pagesize)
                     if sectors > rsectors:
                         self.error(f"Partition {partition} only has {rsectors}, you were using {sectors}. " +
                                    "Aborting")
@@ -711,7 +726,7 @@ class DaHandler(metaclass=LogBase):
                     while sectors:
                         sectorsize = sectors * self.mtk.daloader.daconfig.pagesize
                         wsize = min(sectorsize, 0x200000)
-                        if self.mtk.daloader.writeflash(addr=sector * self.config.pagesize,
+                        if self.mtk.daloader.writeflash(addr=sector * pagesize,
                                                         length=wsize,
                                                         filename="",
                                                         wdata=wipedata[:wsize],
@@ -721,8 +736,8 @@ class DaHandler(metaclass=LogBase):
                                 f"sector count {str(sectors)}.")
                             error = True
                             break
-                        sectors -= (wsize // self.config.pagesize)
-                        sector += (wsize // self.config.pagesize)
+                        sectors -= (wsize // pagesize)
+                        sector += (wsize // pagesize)
                     if not error:
                         print(
                             f"Formatted sector {str(rpartition.sector)} with " +
