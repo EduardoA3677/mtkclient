@@ -63,6 +63,18 @@ class SecCfgV4(metaclass=LogBase):
         seccfg_data = pack("<IIIIIII", self.magic, self.seccfg_ver, self.seccfg_size, self.lock_state,
                            self.critical_lock_state, self.sboot_runtime, 0x45454545)
         _hash = hashlib.sha256(seccfg_data).digest()
+        
+        # Debug: Show lock state and hashes
+        self.debug(f"lock_state={self.lock_state}, critical_lock_state={self.critical_lock_state}")
+        self.debug(f"Expected hash: {_hash.hex()}")
+        self.debug(f"Stored hash: {self.hash.hex()}")
+        
+        # Check if already unlocked (lock_state == 3 means unlocked)
+        if self.lock_state == 3:
+            self.info("Device is already unlocked. No crypto detection needed.")
+            self.hwtype = "UNKNOWN"
+            return True
+        
         dec_hash = self.hwc.sej.sej_sec_cfg_sw(self.hash, False)
         if _hash == dec_hash:
             self.hwtype = "SW"
@@ -107,7 +119,10 @@ class SecCfgV4(metaclass=LogBase):
                         else:
                             return False
             if self.hwtype is None:
-                self.info(f"hwtype not supported: {self.hwtype}")
+                self.error(f"hwtype not supported: {self.hwtype}")
+                self.error(f"lock_state={self.lock_state}, critical_lock_state={self.critical_lock_state}")
+                self.error("Tried: SW, HW, HWXOR, V3, V4, V2 - none matched")
+                self.error("Device may already be unlocked or use unsupported crypto")
                 return False
             self.info(f"hwtype found: {self.hwtype}")
         """
