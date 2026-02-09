@@ -1064,6 +1064,10 @@ class Preloader(metaclass=LogBase):
     def send_da(self, address, size, sig_len, dadata):
         self.config.set_gui_status(self.config.tr("Sending DA."))
         gen_chksum, data = self.prepare_data(dadata[:-sig_len], dadata[-sig_len:], size)
+        
+        # Detect crash operation: address=0, size=0x100 with dummy data
+        is_crash_mode = (address == 0 and size == 0x100)
+        
         if not self.echo(self.Cmd.SEND_DA.value):  # 0xD7
             self.error("Error on DA_Send cmd")
             self.config.set_gui_status(self.config.tr("Error on DA_Send cmd"))
@@ -1089,11 +1093,37 @@ class Preloader(metaclass=LogBase):
                 return False
             status = 0
         if 0 <= status <= 0xFF:
-            if not self.upload_data(data, gen_chksum):
-                self.error("Error on uploading da data")
-                return False
+            # For crash mode, send data but don't wait for response
+            # as the device will crash and disconnect
+            if is_crash_mode:
+                # Send data without expecting response
+                try:
+                    bytestowrite = len(data)
+                    if hasattr(self.mtk.port.cdc, 'EP_IN'):
+                        maxinsize = self.mtk.port.cdc.EP_IN.wMaxPacketSize
+                    else:
+                        maxinsize = 0x400
+                    pos = 0
+                    while bytestowrite > 0:
+                        _sz = min(bytestowrite, maxinsize)
+                        self.usbwrite(data[pos:pos + _sz])
+                        bytestowrite -= _sz
+                        pos += _sz
+                        if pos % 0x2000 == 0:
+                            self.usbwrite(b"")
+                    if self.config.hwcode != 0x2531:
+                        self.usbwrite(b"")
+                    # Device will crash, don't wait for response
+                    return True
+                except Exception:
+                    # Expected: device crashes and disconnects
+                    return True
             else:
-                return True
+                if not self.upload_data(data, gen_chksum):
+                    self.error("Error on uploading da data")
+                    return False
+                else:
+                    return True
         self.error(f"DA_Send status error:{self.eh.status(status)}")
         self.config.set_gui_status(self.config.tr("Error on DA_Send"))
         return False

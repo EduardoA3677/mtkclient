@@ -21,6 +21,28 @@ pip3 install -r requirements.txt
 - Test on device connect using "UsbDkController -n" if you see a device with 0x0E8D 0x0003
 - Works fine under Windows 10 and 11 :D
 
+#### Windows 11 Alternatives (if UsbDk has issues)
+**See [Windows 11 Alternatives Guide](WINDOWS11_ALTERNATIVES.md) for detailed instructions**
+
+**Option 1: Serial/COM Port Mode (No UsbDk needed)**
+```shell
+python mtk.py --serialport DETECT gettargetconfig
+python mtk.py --serialport COM3 r boot boot.bin
+```
+- ✅ No UsbDk required
+- ✅ Works with native Windows drivers
+- ⚠️ No bootrom exploits support
+- ⚠️ Slower than USB mode
+
+**Option 2: libusbK Driver (via Zadig)**
+- Download [Zadig](https://zadig.akeo.ie/)
+- Install libusbK driver for MTK device
+- Supports all features including exploits
+
+**Option 3: WinUSB Driver (via Zadig)**
+- Native Windows driver
+- Similar to libusbK
+
 #### Building wheel issues (creds to @Oyoh-Edmond)
 ##### Download and Install the Build Tools:
     Go to the Visual Studio Build Tools [download](https://visualstudio.microsoft.com/visual-cpp-build-tools) page.

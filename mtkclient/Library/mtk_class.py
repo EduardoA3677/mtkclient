@@ -168,23 +168,42 @@ class Mtk(metaclass=LogBase):
         if self.config.enforcecrash or self.config.meid is None or not self.config.is_brom:
             self.info("We're not in bootrom, trying to crash da...")
             if mode is None:
-                for crashmode in range(0, 3):
+                # Try crash modes in order, but limit attempts to prevent infinite loops
+                max_crash_attempts = 3
+                for crashmode in range(0, max_crash_attempts):
                     try:
                         plt.crash(crashmode)
-                    except Exception:
+                    except Exception as err:
+                        self.__logger.debug(f"Crash mode {crashmode} exception: {str(err)}")
                         pass
+                    # Give device more time to crash, disconnect, and potentially enter BROM
+                    # Some devices need longer to fully reset
+                    import time
+                    time.sleep(1.5)  # Increased from 0.5s to 1.5s
                     rmtk = Mtk(config=self.config, loglevel=self.__logger.level,
                                serialportname=rmtk.port.serialportname)
                     rmtk.preloader.display = display
                     if rmtk.preloader.init(maxtries=20):
                         if rmtk.config.is_brom:
+                            self.info(f"Successfully entered BROM mode with crash mode {crashmode}")
                             break
+                        else:
+                            self.debug(f"Crash mode {crashmode}: Device reconnected but not in BROM mode, trying next mode...")
+                    else:
+                        self.debug(f"Crash mode {crashmode}: Device failed to reconnect")
+                else:
+                    # All crash modes failed
+                    self.warning("All crash modes attempted but device didn't enter BROM mode")
+                    self.warning("This may indicate that crash exploit doesn't work for this device")
             else:
                 try:
                     plt.crash(mode)
                 except Exception as err:
                     self.__logger.debug(str(err))
                     pass
+                # Give device time to crash and disconnect
+                import time
+                time.sleep(1.5)  # Increased from 0.5s to 1.5s
                 rmtk = Mtk(config=self.config, loglevel=self.__logger.level, serialportname=rmtk.port.serialportname)
                 rmtk.preloader.display = display
                 if rmtk.preloader.init(maxtries=20):

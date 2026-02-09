@@ -112,6 +112,11 @@ class DeviceClass(metaclass=LogBase):
     def rword(self, count=1, little=False):
         rev = "<" if little else ">"
         value = self.usbread(2 * count)
+        # Handle empty buffer (device disconnected/crashed)
+        if len(value) < 2 * count:
+            if count == 1:
+                return 0
+            return tuple([0] * count)
         data = unpack(rev + "H" * count, value)
         if count == 1:
             return data[0]
